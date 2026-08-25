@@ -1,7 +1,7 @@
 EquiBorrow - Campus Borrowing System
 Authors:
     Dimakuta, Charles Asher C.
-    Lumapas, Jhayvine Mae D.
+    Lumapas, Jayvhine Mae D.
 Section Code: BSIT 3Cx
 Desktop Application Development, Activity 1
 
