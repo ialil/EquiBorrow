@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="README.md.txt" />
-  </Folder>
   <Project Path="src/EquiBorrow.Application/EquiBorrow.Application.csproj" Id="602df3a9-17ed-479a-b4b1-33596c34f05b" />
   <Project Path="src/EquiBorrow.Domain/EquiBorrow.Domain.csproj" Id="05dc5c02-a739-433d-9c82-51ddebbb6e1c" />
   <Project Path="src/EquiBorrow.Infrastructure/EquiBorrow.Infrastructure.csproj" Id="7600242f-706a-49e8-8cc8-c717ec69bc9d" />
