@@ -24,4 +24,17 @@ public class InMemoryBorrowingRepository : IBorrowingRepository
         var count = _borrowings.Count(b => b.StudentId == studentId && b.Status == BorrowingStatus.Active);
         return Task.FromResult(count);
     }
+
+    // 🆕 NEW METHOD 1: Get all borrowings (for displaying in UI)
+    public Task<IReadOnlyList<Borrowing>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IReadOnlyList<Borrowing>>(_borrowings);
+    }
+
+    // 🆕 NEW METHOD 2: Get a specific borrowing by ID (for returning)
+    public Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var borrowing = _borrowings.FirstOrDefault(b => b.Id == id);
+        return Task.FromResult(borrowing);
+    }
 }
