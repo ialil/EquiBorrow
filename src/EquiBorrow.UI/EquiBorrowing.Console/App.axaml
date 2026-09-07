@@ -1,0 +1,107 @@
+<Application xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				 x:Class="EquiBorrow.UI.App">
+	<Application.Styles>
+	  <FluentTheme />
+	<!-- buttons -->
+	<Style Selector="Button.primary" x:SetterTargetType="Button">
+	  <Setter Property="Background" Value="#007ACC"/>
+	  <Setter Property="Foreground" Value="White"/>
+	  <Setter Property="FontWeight" Value="Bold"/>
+	  <Setter Property="CornerRadius" Value="6"/>
+	  <Setter Property="Padding" Value="8,6"/>
+		<Setter Property="Template">
+		<ControlTemplate>
+		  <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+			<TextBlock Text="{TemplateBinding Content}"
+					   Foreground="{TemplateBinding Foreground}"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center"
+					   TextWrapping="NoWrap"
+					   TextTrimming="CharacterEllipsis"
+					   Margin="4,0" />
+		  </Border>
+		</ControlTemplate>
+	  </Setter>
+	</Style>
+
+	<Style Selector="Button.secondary" x:SetterTargetType="Button">
+	  <Setter Property="Background" Value="#E0E0E0"/>
+	  <Setter Property="Foreground" Value="#1F1F1F"/>
+	  <Setter Property="CornerRadius" Value="6"/>
+	  <Setter Property="Padding" Value="6,4"/>
+		<Setter Property="Template">
+		<ControlTemplate>
+		  <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+			<TextBlock Text="{TemplateBinding Content}"
+					   Foreground="{TemplateBinding Foreground}"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center"
+					   TextWrapping="NoWrap"
+					   TextTrimming="CharacterEllipsis"/>
+		  </Border>
+		</ControlTemplate>
+	  </Setter>
+	</Style>
+
+	<Style Selector="Button.danger" x:SetterTargetType="Button">
+	  <Setter Property="Background" Value="#D9534F"/>
+	  <Setter Property="Foreground" Value="White"/>
+	  <Setter Property="CornerRadius" Value="6"/>
+	  <Setter Property="Padding" Value="6,4"/>
+		<Setter Property="Template">
+		<ControlTemplate>
+		  <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+			<TextBlock Text="{TemplateBinding Content}"
+					   Foreground="{TemplateBinding Foreground}"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center"
+					   TextWrapping="NoWrap"
+					   TextTrimming="CharacterEllipsis"/>
+		  </Border>
+		</ControlTemplate>
+	  </Setter>
+	</Style>
+
+  <!-- hover/disabled -->
+	<Style Selector="Button:pointerover" x:SetterTargetType="Button">
+	  <Setter Property="Opacity" Value="1"/>
+	<!-- removed RenderTransformOrigin -->
+	</Style>
+
+	<Style Selector="Button:disabled" x:SetterTargetType="Button">
+	  <Setter Property="Opacity" Value="0.85"/>
+	  <Setter Property="Background" Value="#BDBDBD"/>
+	  <Setter Property="Foreground" Value="#222222"/>
+	</Style>
+		<Styles>
+		<!-- primary -->
+		<Style Selector="Button.primary:pointerover" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#0062A3" />
+		</Style>
+		<Style Selector="Button.primary:pressed" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#00508A" />
+		</Style>
+		<Style Selector="Button.primary:disabled" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#8FB7DA" />
+		  <Setter Property="Foreground" Value="#FFFFFF" />
+		  <Setter Property="Opacity" Value="1" />
+		</Style>
+
+		<!-- secondary -->
+		<Style Selector="Button.secondary:pointerover" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#D0D0D0" />
+		</Style>
+		<Style Selector="Button.secondary:disabled" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#F0F0F0" />
+		  <Setter Property="Foreground" Value="#707070" />
+		  <Setter Property="Opacity" Value="1" />
+		</Style>
+
+		<!-- danger -->
+		<Style Selector="Button.danger:pointerover" x:SetterTargetType="Button">
+		  <Setter Property="Background" Value="#C43E3A" />
+		</Style>
+	  </Styles>
+	</Application.Styles>
+</Application>

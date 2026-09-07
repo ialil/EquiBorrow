@@ -25,13 +25,13 @@ public class InMemoryBorrowingRepository : IBorrowingRepository
         return Task.FromResult(count);
     }
 
-    // 🆕 NEW METHOD 1: Get all borrowings (for displaying in UI)
+    // get all borrowings
     public Task<IReadOnlyList<Borrowing>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult<IReadOnlyList<Borrowing>>(_borrowings);
     }
 
-    // 🆕 NEW METHOD 2: Get a specific borrowing by ID (for returning)
+    // get borrowing by id
     public Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var borrowing = _borrowings.FirstOrDefault(b => b.Id == id);

@@ -1,0 +1,10 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		x:Class="EquiBorrow.UI.MainWindow"
+		Title="EquiBorrow - UI" Width="700" Height="420"
+		Background="#F2F2F2">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+	<TextBlock Text="EquiBorrow" FontSize="24" Foreground="Black" HorizontalAlignment="Center" Margin="0,8"/>
+	<!-- Simplified: reuse existing layout moved to new project namespace -->
+  </Grid>
+</Window>

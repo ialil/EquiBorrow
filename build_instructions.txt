@@ -1,0 +1,13 @@
+To rebuild the solution from a clean state:
+
+1. In your solution directory run:
+   git status --porcelain
+   git restore .
+   git clean -fd
+
+2. Then build:
+   dotnet build EquiBorrow.slnx
+
+If you prefer Visual Studio: Close and re-open the solution, then Build > Clean Solution, Build > Build Solution.
+
+These steps restore the repository to HEAD and remove untracked files, then build the solution.
