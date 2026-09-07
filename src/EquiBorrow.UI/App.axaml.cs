@@ -4,7 +4,7 @@ using Avalonia.Markup.Xaml;
 
 namespace EquiBorrow.UI;
 
-public partial class App : Application
+public partial class App : global::Avalonia.Application
 {
     public override void Initialize()
     {

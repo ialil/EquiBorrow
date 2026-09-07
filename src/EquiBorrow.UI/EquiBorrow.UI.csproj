@@ -14,9 +14,10 @@
 	<ProjectReference Include="..\EquiBorrow.Infrastructure\EquiBorrow.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
 	<Compile Include="..\EquiBorrowing.Console\**\*.cs" />
-	<AvaloniaXaml Include="..\EquiBorrowing.Console\**\*.axaml" />
+	<AvaloniaXaml Include="App.axaml" />
+	<AvaloniaXaml Include="MainWindow.axaml" />
   </ItemGroup>
 
   <ItemGroup>
