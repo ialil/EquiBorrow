@@ -16,6 +16,17 @@
 
   <ItemGroup>
 	<Compile Include="..\EquiBorrowing.Console\**\*.cs" />
+	<!-- Include Avalonia XAML from the canonical UI sources so App/MainWindow and styles are available at runtime. -->
+	<AvaloniaXaml Include="..\EquiBorrowing.Console\**\*.axaml" />
+  </ItemGroup>
+
+  <!-- Exclude any nested copies or generated files that may exist inside this project folder
+	   (e.g., src/EquiBorrow.UI/EquiBorrowing.Console) which would be implicitly included
+	   by the SDK-style default compile items and cause duplicate types/assembly attributes. -->
+  <ItemGroup>
+	<Compile Remove="EquiBorrowing.Console\**\*.cs" />
+	<AvaloniaXaml Remove="EquiBorrowing.Console\**\*.axaml" />
+	<None Remove="EquiBorrowing.Console\**\*" />
   </ItemGroup>
 
   <ItemGroup>
