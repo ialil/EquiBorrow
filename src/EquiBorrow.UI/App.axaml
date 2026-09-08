@@ -18,6 +18,8 @@
       <Setter Property="Foreground" Value="White" />
       <Setter Property="Padding" Value="8,4" />
       <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
     </Style>
 
     <Style Selector="Button.secondary">
@@ -25,6 +27,8 @@
       <Setter Property="Foreground" Value="#111111" />
       <Setter Property="Padding" Value="8,4" />
       <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
     </Style>
 
     <Style Selector="Button.danger">
@@ -32,6 +36,8 @@
       <Setter Property="Foreground" Value="White" />
       <Setter Property="Padding" Value="8,4" />
       <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
     </Style>
 
   </Application.Styles>

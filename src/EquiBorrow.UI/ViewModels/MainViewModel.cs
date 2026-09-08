@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using Avalonia.Media;
 
 namespace EquiBorrow.UI.ViewModels;
 
@@ -17,6 +18,9 @@ public class EquipmentItemViewModel
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public bool IsAvailable { get; set; }
+
+    public IBrush AvailabilityBrush => IsAvailable ? new SolidColorBrush(Colors.Green) : new SolidColorBrush(Colors.Red);
+    public string AvailabilityText => IsAvailable ? "Available" : "Borrowed";
 }
 
 public class MainViewModel : INotifyPropertyChanged
@@ -44,6 +48,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     private string _statusMessage = string.Empty;
     public string StatusMessage { get => _statusMessage; set { _statusMessage = value; OnPropertyChanged(nameof(StatusMessage)); } }
+
+    public bool CanBorrowEnabled => SelectedStudent != null && SelectedEquipment != null;
+    public string BorrowButtonTooltip => SelectedStudent == null ? "Select a student" : SelectedEquipment == null ? "Select equipment" : "Click to borrow";
 
     public RelayCommand AddStudentCommand { get; }
     public RelayCommand UpdateStudentCommand { get; }
