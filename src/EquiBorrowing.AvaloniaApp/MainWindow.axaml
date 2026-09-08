@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		x:Class="EquiBorrowing.AvaloniaApp.MainWindow"
+		Title="EquiBorrow - Sample UI" Width="600" Height="360"
+		Background="#E6E6E6">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+	<TextBlock Text="Welcome to EquiBorrow" FontSize="22" Foreground="Black" HorizontalAlignment="Center" Margin="0,10"/>
+	<TextBlock Grid.Row="1" Text="A simple greyscale Avalonia UI" Foreground="Black" HorizontalAlignment="Center" Margin="0,4"/>
+
+	<StackPanel Grid.Row="2" Margin="0,20" HorizontalAlignment="Center">
+	  <Border Background="#D0D0D0" Padding="12" CornerRadius="6">
+		<StackPanel>
+		  <TextBlock Text="Account: 123456" Foreground="Black" Margin="0,4"/>
+		  <TextBlock Text="Balance: $1,234.00" Foreground="Black" Margin="0,4"/>
+		</StackPanel>
+	  </Border>
+	</StackPanel>
+
+	<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+	  <Button Content="Close" Width="100" Click="Close_Click"/>
+	</StackPanel>
+  </Grid>
+</Window>

@@ -21,6 +21,7 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
         [109] = new Equipment(109, "Smartwatch Apple Watch", true),
         [110] = new Equipment(110, "External Hard Drive Seagate", true)
     };
+    private int _nextId = 111;
 
     public Task<Equipment?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
@@ -32,6 +33,19 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
     {
         if (_equipments.ContainsKey(equipment.Id))
             _equipments[equipment.Id] = equipment;
+        return Task.CompletedTask;
+    }
+
+    public Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default)
+    {
+        equipment.Id = _nextId++;
+        _equipments[equipment.Id] = equipment;
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        _equipments.Remove(id);
         return Task.CompletedTask;
     }
 }
