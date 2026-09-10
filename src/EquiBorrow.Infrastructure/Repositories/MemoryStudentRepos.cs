@@ -21,10 +21,31 @@ public class InMemoryStudentRepository : IStudentRepository
         [9] = new Student(9, "Alice", true),
         [10] = new Student(10, "Bob", false),
     };
+    private int _nextId = 11;
 
     public Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         _students.TryGetValue(id, out var student);
         return Task.FromResult(student);
+    }
+
+    public Task AddAsync(Student student, CancellationToken cancellationToken = default)
+    {
+        student.Id = _nextId++;
+        _students[student.Id] = student;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(Student student, CancellationToken cancellationToken = default)
+    {
+        if (_students.ContainsKey(student.Id))
+            _students[student.Id] = student;
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        _students.Remove(id);
+        return Task.CompletedTask;
     }
 }

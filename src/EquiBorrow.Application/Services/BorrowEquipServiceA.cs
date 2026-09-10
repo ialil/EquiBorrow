@@ -25,26 +25,26 @@ public class BorrowEquipmentService
 
     public async Task<Borrowing> ExecuteAsync(int studentId, int equipmentId, CancellationToken cancellationToken = default)
     {
-        // 1. Validate Student
+        // validate student
         var student = await _studentRepository.GetByIdAsync(studentId, cancellationToken);
         if (student == null)
             throw new InvalidOperationException("Student does not exist.");
         if (!student.IsActive)
             throw new InvalidOperationException("Student is not allowed to borrow equipment.");
 
-        // 2. Validate Equipment
+        // validate equipment
         var equipment = await _equipmentRepository.GetByIdAsync(equipmentId, cancellationToken);
         if (equipment == null)
             throw new InvalidOperationException("Equipment does not exist.");
         if (!equipment.IsAvailable)
             throw new InvalidOperationException("Equipment is currently unavailable.");
 
-        // 3. Check Borrowing Limit
+        // check limit
         var activeCount = await _borrowingRepository.GetActiveCountByStudentIdAsync(studentId, cancellationToken);
         if (activeCount >= MaxActiveBorrowings)
             throw new InvalidOperationException($"Student already has max {MaxActiveBorrowings} active borrowings.");
 
-        // 4. Create Borrowing Record
+        // create borrowing
         var borrowing = new Borrowing(
             id: 0,
             studentId: studentId,
@@ -53,10 +53,10 @@ public class BorrowEquipmentService
             expectedReturnDate: DateTime.Now.AddDays(7)
         );
 
-        // 5. Mark Equipment as Unavailable
+        // mark equipment unavailable
         equipment.IsAvailable = false;
 
-        // 6. Save Changes
+        // save
         await _borrowingRepository.AddAsync(borrowing, cancellationToken);
         await _equipmentRepository.UpdateAsync(equipment, cancellationToken);
 
