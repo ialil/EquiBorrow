@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:EquiBorrow.UI"
+             x:Class="EquiBorrow.UI.App"
+             RequestedThemeVariant="Default">
+
+  <Application.DataTemplates>
+    <!-- <local:ViewLocator /> if you have one in EquiBorrow.UI -->
+  </Application.DataTemplates>
+
+  <Application.Styles>
+    <FluentTheme />
+
+    <!-- Explicit button styles (primary/secondary/danger) to ensure visible buttons and proper states -->
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#0078D4" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="#E1E1E1" />
+      <Setter Property="Foreground" Value="#111111" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#D9534F" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
+  </Application.Styles>
+
+</Application>
