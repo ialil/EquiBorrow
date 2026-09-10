@@ -23,3 +23,4 @@ namespace EquiBorrow.UI.Converters
         }
     }
 }
+//fahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh,I DONT WANT TO TOUCH GITHUB ANYMORE. WE HAVE BEEEF

@@ -26,3 +26,6 @@ namespace EquiBorrow.UI.Converters
         }
     }
 }
+//im tired of this granpa
+//itss too damn badd wahhahahahahahahaha
+//GITHUB COMMIT THIS ALREADY

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EquiBorrow.Application.Interfaces;
@@ -20,11 +21,18 @@ public class InMemoryStudentRepository : IStudentRepository
         [8] = new Student(8, "Quifrey", true),
         [9] = new Student(9, "Alice", true),
         [10] = new Student(10, "Bob", false),
+        [11] = new Student(11, "Queenie", true),
     };
 
     public Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         _students.TryGetValue(id, out var student);
         return Task.FromResult(student);
+    }
+
+    public Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var allStudents = _students.Values.ToList();
+        return Task.FromResult<IReadOnlyList<Student>>(allStudents);
     }
 }

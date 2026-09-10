@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EquiBorrow.Application.Interfaces;
@@ -33,5 +34,11 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
         if (_equipments.ContainsKey(equipment.Id))
             _equipments[equipment.Id] = equipment;
         return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var allEquipments = _equipments.Values.ToList();
+        return Task.FromResult<IReadOnlyList<Equipment>>(allEquipments);
     }
 }
