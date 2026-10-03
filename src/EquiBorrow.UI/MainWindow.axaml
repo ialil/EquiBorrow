@@ -24,7 +24,7 @@
 		</ListBox>
 
 		<TextBlock Text="Borrowed Items (Memory)" FontWeight="Bold" FontSize="12" Margin="0,12,0,8"/>
-		<ListBox ItemsSource="{Binding StudentBorrows}" Height="120">
+		<ListBox ItemsSource="{Binding StudentBorrows}" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto">
 		  <ListBox.ItemTemplate>
 			<DataTemplate>
 			  <StackPanel>
@@ -48,8 +48,10 @@
 
 	  <!-- CENTER BUTTONS -->
 	  <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-		<Button Content="Borrow →" Command="{Binding BorrowCommand}" Width="120" Margin="0,0,0,12" HorizontalAlignment="Center"/>
-		<Button Content="Refresh" Command="{Binding RefreshCommand}" Width="120" HorizontalAlignment="Center"/>
+	<Button Content="Borrow →" Command="{Binding BorrowCommand}" Width="120" Margin="0,0,0,12" HorizontalAlignment="Center"/>
+	<Button Content="Refresh" Command="{Binding RefreshCommand}" Width="120" HorizontalAlignment="Center"/>
+	<!-- Status message moved here to avoid overlapping the borrowed-items area -->
+	<TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,8,0,0" HorizontalAlignment="Center"/>
 	  </StackPanel>
 
 	  <!-- EQUIPMENT SECTION -->
@@ -78,11 +80,13 @@
 	  </StackPanel>
 	</Grid>
 
-	<StackPanel Grid.Row="2" Margin="0,16,0,0">
-	  <TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,4"/>
-	</StackPanel>
+  <!-- moved StatusMessage into center column; keep Working indicator below so it's visible near controls -->
+  <StackPanel Grid.Row="2" Margin="0,16,0,0" HorizontalAlignment="Center">
+	<TextBlock Text="Working..." FontStyle="Italic" Foreground="Gray" IsVisible="{Binding IsBusy}" Margin="0,4" />
+  </StackPanel>
 
 	<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+	  <Button Content="Inspect SQL" Command="{Binding InspectSqlCommand}" Width="120" />
 	  <Button Content="Close" Width="100" Click="Close_Click"/>
 	</StackPanel>
   </Grid>

@@ -36,6 +36,20 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
         return Task.CompletedTask;
     }
 
+    public Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default)
+    {
+        var nextId = _equipments.Keys.DefaultIfEmpty(100).Max() + 1;
+        equipment.Id = nextId;
+        _equipments[equipment.Id] = equipment;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        _equipments.Remove(id);
+        return Task.CompletedTask;
+    }
+
     public Task<IReadOnlyList<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var allEquipments = _equipments.Values.ToList();

@@ -35,4 +35,24 @@ public class InMemoryStudentRepository : IStudentRepository
         var allStudents = _students.Values.ToList();
         return Task.FromResult<IReadOnlyList<Student>>(allStudents);
     }
+    public Task AddAsync(Student student, CancellationToken cancellationToken = default)
+    {
+        var nextId = _students.Keys.DefaultIfEmpty(0).Max() + 1;
+        student.Id = nextId;
+        _students[student.Id] = student;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(Student student, CancellationToken cancellationToken = default)
+    {
+        if (_students.ContainsKey(student.Id))
+            _students[student.Id] = student;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        _students.Remove(id);
+        return Task.CompletedTask;
+    }
 }

@@ -1,26 +1,19 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using EquiBorrow.Infrastructure.Repositories;
 using EquiBorrow.UI.ViewModels;
 
 namespace EquiBorrow.UI;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    private readonly MainViewModel _viewModel;
+
+    // MainWindow will be created by the DI container; accept view model via constructor
+    public MainWindow(MainViewModel viewModel)
     {
+        _viewModel = viewModel;
         InitializeComponent();
-
-        // Create repository instances
-        var studentRepository = new InMemoryStudentRepository();
-        var equipmentRepository = new InMemoryEquipmentRepository();
-        var borrowingRepository = new InMemoryBorrowingRepository();
-
-        // Create viewmodel with repositories
-        var viewModel = new MainViewModel(studentRepository, equipmentRepository, borrowingRepository);
-
-        // Set the data context
-        DataContext = viewModel;
+        DataContext = _viewModel;
     }
 
     private void InitializeComponent()

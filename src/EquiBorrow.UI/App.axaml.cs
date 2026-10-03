@@ -6,6 +6,8 @@ namespace EquiBorrow.UI;
 
 public partial class App : global::Avalonia.Application
 {
+    public static global::System.IServiceProvider? ServiceProvider { get; set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -15,7 +17,21 @@ public partial class App : global::Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            // Resolve MainWindow from the service provider when available
+            if (ServiceProvider != null)
+            {
+                desktop.MainWindow = ServiceProvider.GetService(typeof(MainWindow)) as MainWindow;
+            }
+            else
+            {
+                // Fallback to in-memory repositories if DI is not configured (useful for designer/debug scenarios)
+                var studentRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryStudentRepository();
+                var equipmentRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryEquipmentRepository();
+                var borrowingRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryBorrowingRepository();
+                var sqlInspector = new EquiBorrow.Infrastructure.Sql.NoOpSqlInspector();
+                var vm = new EquiBorrow.UI.ViewModels.MainViewModel(studentRepo, equipmentRepo, borrowingRepo, sqlInspector);
+                desktop.MainWindow = new MainWindow(vm);
+            }
         }
 
         base.OnFrameworkInitializationCompleted();

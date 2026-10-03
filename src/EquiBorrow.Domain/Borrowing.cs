@@ -16,6 +16,9 @@ public class Borrowing
     public BorrowingStatus Status { get; set; }
     public DateTime? ReturnDate { get; set; }
 
+    // Parameterless constructor required by EF Core
+    public Borrowing() { }
+
     public Borrowing(int id, int studentId, int equipmentId, DateTime borrowDate, DateTime expectedReturnDate)
     {
         Id = id;
