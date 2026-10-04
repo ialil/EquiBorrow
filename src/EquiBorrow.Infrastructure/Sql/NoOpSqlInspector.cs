@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
+using EquiBorrow.Application.Interfaces;
 
 namespace EquiBorrow.Infrastructure.Sql;
 
-public class NoOpSqlInspector : ISqlInspector
+public class NoOpSqlInspector : IInspectionService
 {
     public Task<string> GetGeneratedSqlAsync()
     {

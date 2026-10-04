@@ -35,7 +35,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly IStudentRepository _studentRepository;
     private readonly IEquipmentRepository _equipmentRepository;
     private readonly IBorrowingRepository _borrowingRepository;
-    private readonly EquiBorrow.Infrastructure.Sql.ISqlInspector _sqlInspector;
+    private readonly IInspectionService _inspectionService;
 
     public ObservableCollection<StudentItemViewModel> Students { get; } = new();
     public ObservableCollection<EquipmentItemViewModel> Equipments { get; } = new();
@@ -102,12 +102,12 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public MainViewModel(IStudentRepository studentRepository, IEquipmentRepository equipmentRepository, IBorrowingRepository borrowingRepository, EquiBorrow.Infrastructure.Sql.ISqlInspector sqlInspector)
+    public MainViewModel(IStudentRepository studentRepository, IEquipmentRepository equipmentRepository, IBorrowingRepository borrowingRepository, IInspectionService inspectionService)
     {
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _equipmentRepository = equipmentRepository ?? throw new ArgumentNullException(nameof(equipmentRepository));
         _borrowingRepository = borrowingRepository ?? throw new ArgumentNullException(nameof(borrowingRepository));
-        _sqlInspector = sqlInspector ?? throw new ArgumentNullException(nameof(sqlInspector));
+        _inspectionService = inspectionService ?? throw new ArgumentNullException(nameof(inspectionService));
 
         AddStudentCommand = new RelayCommand(_ => AddStudentAsync());
         UpdateStudentCommand = new RelayCommand(_ => UpdateStudentAsync());
@@ -122,7 +122,7 @@ public class MainViewModel : INotifyPropertyChanged
         BorrowCommand = new RelayCommand(_ => BorrowAsync(), _ => !IsBusy);
         RefreshCommand = new RelayCommand(_ => Refresh());
 
-        InspectSqlCommand = new RelayCommand(_ => InspectSqlAsync());
+        // InspectSqlCommand already assigned with CanExecute predicate above
 
         // Load data from repositories
         LoadDataAsync();
@@ -190,13 +190,16 @@ public class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var sql = await _sqlInspector.GetGeneratedSqlAsync();
+            var sql = await _inspectionService.GetGeneratedSqlAsync();
             // Write to docs/database-queries.sql (lab-required filename)
             try
             {
-                System.IO.Directory.CreateDirectory("docs");
-                System.IO.File.WriteAllText("docs/database-queries.sql", sql);
-                StatusMessage = "Generated SQL written to docs/database-queries.sql";
+                // Write to the repository docs folder (resolve relative to app base directory)
+                var baseDir = AppContext.BaseDirectory ?? string.Empty;
+                var repoDocsPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir, "..", "..", "..", "docs", "database-queries.sql"));
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(repoDocsPath) ?? "docs");
+                System.IO.File.WriteAllText(repoDocsPath, sql);
+                StatusMessage = $"Generated SQL written to {repoDocsPath}";
             }
             catch (Exception ex)
             {

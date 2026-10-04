@@ -2,10 +2,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using EquiBorrow.Infrastructure.Persistence;
+using EquiBorrow.Application.Interfaces;
 
 namespace EquiBorrow.Infrastructure.Sql;
 
-public class SqlInspector : ISqlInspector
+public class SqlInspector : IInspectionService
 {
     private readonly EquipmentBorrowingDbContext _db;
 

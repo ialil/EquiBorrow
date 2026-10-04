@@ -38,7 +38,10 @@ public static class Program
         services.AddScoped<IStudentRepository, EfStudentRepository>();
         services.AddScoped<IEquipmentRepository, EfEquipmentRepository>();
         services.AddScoped<IBorrowingRepository, EfBorrowingRepository>();
-        services.AddScoped<EquiBorrow.Infrastructure.Sql.ISqlInspector, EquiBorrow.Infrastructure.Sql.SqlInspector>();
+        // Register application-level inspection service implemented by the infrastructure
+        // Register the concrete SqlInspector and map the application-level inspection service
+        services.AddScoped<EquiBorrow.Infrastructure.Sql.SqlInspector>();
+        services.AddScoped<IInspectionService>(sp => sp.GetRequiredService<EquiBorrow.Infrastructure.Sql.SqlInspector>());
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();
@@ -55,6 +58,15 @@ public static class Program
             db.Database.Migrate();
         }
 
+        // Create a retained scope that will be used for resolving the MainWindow
+        // This keeps scoped services (DbContext, repositories, inspection service) alive
+        // for the lifetime of the MainWindow and avoids resolving scoped services from the root provider.
+        var windowScope = serviceProvider.CreateScope();
+        App.WindowScope = windowScope;
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+
+        // Dispose retained window scope after application exits
+        windowScope.Dispose();
     }
 }

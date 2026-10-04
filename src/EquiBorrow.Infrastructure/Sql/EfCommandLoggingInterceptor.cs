@@ -7,20 +7,66 @@ namespace EquiBorrow.Infrastructure.Sql;
 
 public class EfCommandLoggingInterceptor : DbCommandInterceptor
 {
-    private readonly string _logPath = Path.Combine("logs", "ef-commands.log");
-    private readonly string _docsPath = Path.Combine("docs", "database-queries.sql");
+    private readonly string _logPath;
+    private readonly string _docsPath;
 
     public EfCommandLoggingInterceptor()
     {
+        // Resolve repository-root docs/logs directories from the application's base directory
+        // Try to locate the repository root by walking up from the base directory and looking
+        // for a solution file (*.sln, *.slnx) or a .git folder. Fallback to a relative path if not found.
+        var baseDir = AppContext.BaseDirectory ?? string.Empty;
+        var repoRoot = FindRepositoryRoot(baseDir) ?? Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
+
+        var repoLogsDir = Path.Combine(repoRoot, "logs");
+        var repoDocsDir = Path.Combine(repoRoot, "docs");
+
+        _logPath = Path.Combine(repoLogsDir, "ef-commands.log");
+        _docsPath = Path.Combine(repoDocsDir, "database-queries.sql");
+
         try
         {
-            Directory.CreateDirectory("logs");
-            Directory.CreateDirectory("docs");
+            Directory.CreateDirectory(repoLogsDir);
+            Directory.CreateDirectory(repoDocsDir);
         }
         catch
         {
             // ignore directory creation failures; writing will fail later if needed
         }
+    }
+
+    private static string? FindRepositoryRoot(string startDirectory)
+    {
+        try
+        {
+            var dir = new DirectoryInfo(startDirectory);
+            for (int i = 0; i < 20 && dir != null; i++)
+            {
+                // check for solution files or git folder or README.md as repo indicators
+                if (Directory.Exists(Path.Combine(dir.FullName, ".git")))
+                    return dir.FullName;
+
+                var slnFiles = Directory.GetFiles(dir.FullName, "*.sln");
+                if (slnFiles.Length > 0)
+                    return dir.FullName;
+
+                var slnxFiles = Directory.GetFiles(dir.FullName, "*.slnx");
+                if (slnxFiles.Length > 0)
+                    return dir.FullName;
+
+                var readme = Path.Combine(dir.FullName, "README.md");
+                if (File.Exists(readme))
+                    return dir.FullName;
+
+                dir = dir.Parent;
+            }
+        }
+        catch
+        {
+            // ignore and fallback
+        }
+
+        return null;
     }
 
     private void AppendText(string text)
