@@ -45,12 +45,13 @@ public class BorrowEquipmentService
             throw new InvalidOperationException($"Student already has max {MaxActiveBorrowings} active borrowings.");
 
         // 4. Create Borrowing Record
+        var today = DateOnly.FromDateTime(DateTime.Now);
         var borrowing = new Borrowing(
             id: 0,
             studentId: studentId,
             equipmentId: equipmentId,
-            borrowDate: DateTime.Now,
-            expectedReturnDate: DateTime.Now.AddDays(7)
+            borrowDate: today,
+            expectedReturnDate: today.AddDays(7)
         );
 
         // 5. Mark Equipment as Unavailable

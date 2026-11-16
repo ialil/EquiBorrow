@@ -27,7 +27,7 @@ public class BorrowedItemViewModel
 {
     public int EquipmentId { get; set; }
     public string EquipmentName { get; set; } = string.Empty;
-    public DateTime BorrowDate { get; set; }
+    public DateOnly BorrowDate { get; set; }
 }
 
 public class MainViewModel : INotifyPropertyChanged
@@ -331,9 +331,7 @@ public class MainViewModel : INotifyPropertyChanged
             var equipmentName = SelectedEquipment?.Name ?? "<unknown equipment>";
 
             // Create borrowing record in repository
-            var borrowing = new Borrowing(0, SelectedStudent.Id, SelectedEquipment.Id, DateTime.Now, DateTime.Now.AddDays(14));
-            await _borrowingRepository.AddAsync(borrowing);
-
+            var borrowing = new Borrowing(0, SelectedStudent.Id, SelectedEquipment.Id,DateOnly.FromDateTime(DateTime.Now), DateOnly.FromDateTime(DateTime.Now).AddDays(14));
             // Refresh UI lists so equipment availability and borrow history reflect persisted state
             var selectedEquipmentId = SelectedEquipment?.Id;
             await LoadEquipmentAsync();

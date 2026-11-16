@@ -25,7 +25,7 @@ public class ReturnEquipmentServices
         var equipment = await _equipmentRepo.GetByIdAsync(borrowing.EquipmentId, cancellationToken);
         if (equipment == null)
             throw new InvalidOperationException("Equipment not found.");
-        borrowing.MarkAsReturned();
+        borrowing.MarkAsReturned(DateOnly.FromDateTime(DateTime.Now));
         equipment.IsAvailable = true;
         await _equipmentRepo.UpdateAsync(equipment, cancellationToken);
         return borrowing;

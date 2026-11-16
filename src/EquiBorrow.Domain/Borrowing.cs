@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using System;
 
 namespace EquiBorrow.Domain;
 
@@ -11,16 +7,18 @@ public class Borrowing
     public int Id { get; set; }
     public int StudentId { get; set; }
     public int EquipmentId { get; set; }
-    public DateTime BorrowDate { get; set; }
-    public DateTime ExpectedReturnDate { get; set; }
+    public DateOnly BorrowDate { get; set; }
+    public DateOnly ExpectedReturnDate { get; set; }
     public BorrowingStatus Status { get; set; }
-    public DateTime? ReturnDate { get; set; }
+    public DateOnly? ReturnDate { get; set; }
 
-    // Parameterless constructor required by EF Core
     public Borrowing() { }
 
-    public Borrowing(int id, int studentId, int equipmentId, DateTime borrowDate, DateTime expectedReturnDate)
+    public Borrowing(int id, int studentId, int equipmentId, DateOnly borrowDate, DateOnly expectedReturnDate)
     {
+        if (expectedReturnDate <= borrowDate)
+            throw new ArgumentException("Expected return date must be later than the checkout date.", nameof(expectedReturnDate));
+
         Id = id;
         StudentId = studentId;
         EquipmentId = equipmentId;
@@ -30,9 +28,14 @@ public class Borrowing
         ReturnDate = null;
     }
 
-    public void MarkAsReturned()
+    public void MarkAsReturned(DateOnly returnDate)
     {
+        if (Status != BorrowingStatus.Active)
+            throw new InvalidOperationException("Only an active borrowing can be returned.");
+        if (returnDate < BorrowDate)
+            throw new InvalidOperationException("Return date cannot precede the checkout date.");
+
         Status = BorrowingStatus.Returned;
-        ReturnDate = DateTime.Now;
+        ReturnDate = returnDate;
     }
 }
