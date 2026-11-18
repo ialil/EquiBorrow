@@ -19,7 +19,6 @@ public class EfBorrowingRepository : IBorrowingRepository
     public async Task AddAsync(Borrowing borrowing, CancellationToken cancellationToken = default)
     {
         await _db.Borrowings.AddAsync(borrowing, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> GetActiveCountByStudentIdAsync(int studentId, CancellationToken cancellationToken = default)

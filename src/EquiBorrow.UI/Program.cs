@@ -38,15 +38,12 @@ public static class Program
             return;
         }
 
-        // One short-lived DbContext per operation (contexts aren't thread-safe or meant to span async work).
+        // One short-lived DbContext per unit of work.
         services.AddDbContextFactory<EquipmentBorrowingDbContext>(options =>
             options.UseNpgsql(connectionString)
                    .LogTo(s => System.IO.File.AppendAllText(System.IO.Path.Combine("logs", "ef.log"), s + Environment.NewLine), Microsoft.Extensions.Logging.LogLevel.Information)
                    .AddInterceptors(interceptor)
             );
-
-        // TRANSITIONAL: existing repositories still take a DbContext; removed in the service refactor.
-        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<EquipmentBorrowingDbContext>>().CreateDbContext());
 
         services.AddScoped<IStudentRepository, EfStudentRepository>();
         services.AddScoped<IEquipmentRepository, EfEquipmentRepository>();
@@ -74,11 +71,6 @@ public static class Program
             return;
         }
 
-        var windowScope = serviceProvider.CreateScope();
-        App.WindowScope = windowScope;
-
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-
-        windowScope.Dispose();
     }
 }

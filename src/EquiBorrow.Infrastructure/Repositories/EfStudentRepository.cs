@@ -30,22 +30,17 @@ public class EfStudentRepository : IStudentRepository
     public async Task AddAsync(Student student, CancellationToken cancellationToken = default)
     {
         await _db.Students.AddAsync(student, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Student student, CancellationToken cancellationToken = default)
     {
         _db.Students.Update(student);
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var s = await _db.Students.FindAsync(new object[] { id }, cancellationToken);
-        if (s != null)
-        {
-            _db.Students.Remove(s);
-            await _db.SaveChangesAsync(cancellationToken);
-        }
+        var student = await _db.Students.FindAsync(new object[] { id }, cancellationToken);
+        if (student != null)
+            _db.Students.Remove(student);
     }
 }

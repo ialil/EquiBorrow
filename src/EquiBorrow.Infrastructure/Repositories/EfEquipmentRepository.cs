@@ -22,10 +22,10 @@ public class EfEquipmentRepository : IEquipmentRepository
         return await _db.Equipment.FindAsync(new object[] { id }, cancellationToken);
     }
 
-    public async Task UpdateAsync(Equipment equipment, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(Equipment equipment, CancellationToken cancellationToken = default)
     {
         _db.Equipment.Update(equipment);
-        await _db.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
     public async Task<IReadOnlyList<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -36,16 +36,12 @@ public class EfEquipmentRepository : IEquipmentRepository
     public async Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default)
     {
         await _db.Equipment.AddAsync(equipment, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var e = await _db.Equipment.FindAsync(new object[] { id }, cancellationToken);
-        if (e != null)
-        {
-            _db.Equipment.Remove(e);
-            await _db.SaveChangesAsync(cancellationToken);
-        }
+        var equipment = await _db.Equipment.FindAsync(new object[] { id }, cancellationToken);
+        if (equipment != null)
+            _db.Equipment.Remove(equipment);
     }
 }
