@@ -48,6 +48,8 @@ public static class Program
         services.AddSingleton(TimeProvider.System);
         services.AddTransient<BorrowEquipmentService>();
         services.AddTransient<ReturnEquipmentService>();
+        services.AddTransient<RegisterStudentService>();
+        services.AddTransient<RegisterEquipmentService>();
         services.AddTransient<ListStudentsService>();
         services.AddTransient<ViewEquipmentCatalogService>();
         services.AddTransient<ViewActiveBorrowingsService>();

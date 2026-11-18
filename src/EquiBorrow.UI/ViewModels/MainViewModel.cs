@@ -12,7 +12,9 @@ namespace EquiBorrow.UI.ViewModels;
 public sealed class StudentItemViewModel
 {
     public int Id { get; init; }
+    public string StudentNumber { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
+    public string? Contact { get; init; }
     public bool IsActive { get; init; }
     public uint Version { get; init; }
 }
@@ -20,7 +22,9 @@ public sealed class StudentItemViewModel
 public sealed class EquipmentItemViewModel
 {
     public int Id { get; init; }
+    public string Identifier { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
+    public string? Description { get; init; }
     public bool IsAvailable { get; init; }
     public uint Version { get; init; }
 }
@@ -40,6 +44,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly ViewEquipmentCatalogService _viewEquipmentCatalogService;
     private readonly ViewActiveBorrowingsService _viewActiveBorrowingsService;
     private readonly BorrowEquipmentService _borrowEquipmentService;
+    private readonly RegisterStudentService _registerStudentService;
+    private readonly RegisterEquipmentService _registerEquipmentService;
     private readonly IInspectionService _inspectionService;
     private readonly TimeProvider _timeProvider;
 
@@ -74,17 +80,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private string _newStudentNumber = string.Empty;
+    public string NewStudentNumber { get => _newStudentNumber; set { _newStudentNumber = value; OnPropertyChanged(nameof(NewStudentNumber)); } }
+
     private string _newStudentName = string.Empty;
     public string NewStudentName { get => _newStudentName; set { _newStudentName = value; OnPropertyChanged(nameof(NewStudentName)); } }
 
-    private bool _newStudentIsActive;
-    public bool NewStudentIsActive { get => _newStudentIsActive; set { _newStudentIsActive = value; OnPropertyChanged(nameof(NewStudentIsActive)); } }
+    private string _newStudentContact = string.Empty;
+    public string NewStudentContact { get => _newStudentContact; set { _newStudentContact = value; OnPropertyChanged(nameof(NewStudentContact)); } }
+
+    private string _newEquipmentIdentifier = string.Empty;
+    public string NewEquipmentIdentifier { get => _newEquipmentIdentifier; set { _newEquipmentIdentifier = value; OnPropertyChanged(nameof(NewEquipmentIdentifier)); } }
 
     private string _newEquipmentName = string.Empty;
     public string NewEquipmentName { get => _newEquipmentName; set { _newEquipmentName = value; OnPropertyChanged(nameof(NewEquipmentName)); } }
 
-    private bool _newEquipmentIsAvailable;
-    public bool NewEquipmentIsAvailable { get => _newEquipmentIsAvailable; set { _newEquipmentIsAvailable = value; OnPropertyChanged(nameof(NewEquipmentIsAvailable)); } }
+    private string _newEquipmentDescription = string.Empty;
+    public string NewEquipmentDescription { get => _newEquipmentDescription; set { _newEquipmentDescription = value; OnPropertyChanged(nameof(NewEquipmentDescription)); } }
 
     private string _statusMessage = "Available in a later step";
     private string _studentsMessage = string.Empty;
@@ -108,6 +120,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_isBusy == value) return;
             _isBusy = value;
             OnPropertyChanged(nameof(IsBusy));
+            AddStudentCommand?.RaiseCanExecuteChanged();
+            AddEquipmentCommand?.RaiseCanExecuteChanged();
             BorrowCommand?.RaiseCanExecuteChanged();
             RefreshCommand?.RaiseCanExecuteChanged();
             InspectSqlCommand?.RaiseCanExecuteChanged();
@@ -119,6 +133,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ViewEquipmentCatalogService viewEquipmentCatalogService,
         ViewActiveBorrowingsService viewActiveBorrowingsService,
         BorrowEquipmentService borrowEquipmentService,
+        RegisterStudentService registerStudentService,
+        RegisterEquipmentService registerEquipmentService,
         IInspectionService inspectionService,
         TimeProvider timeProvider)
     {
@@ -126,12 +142,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _viewEquipmentCatalogService = viewEquipmentCatalogService ?? throw new ArgumentNullException(nameof(viewEquipmentCatalogService));
         _viewActiveBorrowingsService = viewActiveBorrowingsService ?? throw new ArgumentNullException(nameof(viewActiveBorrowingsService));
         _borrowEquipmentService = borrowEquipmentService ?? throw new ArgumentNullException(nameof(borrowEquipmentService));
+        _registerStudentService = registerStudentService ?? throw new ArgumentNullException(nameof(registerStudentService));
+        _registerEquipmentService = registerEquipmentService ?? throw new ArgumentNullException(nameof(registerEquipmentService));
         _inspectionService = inspectionService ?? throw new ArgumentNullException(nameof(inspectionService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        AddStudentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        AddStudentCommand = new RelayCommand(_ => RunCommandAsync(RegisterStudentAsync), _ => !IsBusy);
         UpdateStudentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
-        AddEquipmentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        AddEquipmentCommand = new RelayCommand(_ => RunCommandAsync(RegisterEquipmentAsync), _ => !IsBusy);
         UpdateEquipmentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
         BorrowCommand = new RelayCommand(_ => RunCommandAsync(BorrowAsync), _ => !IsBusy);
         RefreshCommand = new RelayCommand(_ => RunCommandAsync(RefreshAsync), _ => !IsBusy);
@@ -163,7 +181,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Students.Add(new StudentItemViewModel
             {
                 Id = student.Id,
+                StudentNumber = student.StudentNumber,
                 Name = student.Name,
+                Contact = student.Contact,
                 IsActive = student.IsActive,
                 Version = student.Version
             });
@@ -187,7 +207,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Equipments.Add(new EquipmentItemViewModel
             {
                 Id = equipment.Id,
+                Identifier = equipment.Identifier,
                 Name = equipment.Name,
+                Description = equipment.Description,
                 IsAvailable = equipment.IsAvailable,
                 Version = equipment.Version
             });
@@ -217,6 +239,70 @@ public sealed class MainViewModel : INotifyPropertyChanged
             });
         }
         StatusMessage = result.Message;
+    }
+
+    private async Task RegisterStudentAsync()
+    {
+        var result = await _registerStudentService.ExecuteAsync(NewStudentNumber, NewStudentName, NewStudentContact);
+        if (result.Outcome == OperationOutcome.Success && result.Value is not null)
+        {
+            NewStudentNumber = string.Empty;
+            NewStudentName = string.Empty;
+            NewStudentContact = string.Empty;
+            await LoadStudentsAsync();
+            SelectedStudent = FindStudent(result.Value.Id);
+            StatusMessage = _studentsMessage == result.Message
+                ? result.Message
+                : $"{result.Message} {_studentsMessage}";
+        }
+        else
+        {
+            if (result.Outcome == OperationOutcome.UnknownOutcome)
+                await LoadStudentsAsync();
+            StatusMessage = result.Message;
+        }
+    }
+
+    private async Task RegisterEquipmentAsync()
+    {
+        var result = await _registerEquipmentService.ExecuteAsync(NewEquipmentIdentifier, NewEquipmentName, NewEquipmentDescription);
+        if (result.Outcome == OperationOutcome.Success && result.Value is not null)
+        {
+            NewEquipmentIdentifier = string.Empty;
+            NewEquipmentName = string.Empty;
+            NewEquipmentDescription = string.Empty;
+            await LoadEquipmentAsync();
+            SelectedEquipment = FindEquipment(result.Value.Id);
+            StatusMessage = _equipmentMessage == result.Message
+                ? result.Message
+                : $"{result.Message} {_equipmentMessage}";
+        }
+        else
+        {
+            if (result.Outcome == OperationOutcome.UnknownOutcome)
+                await LoadEquipmentAsync();
+            StatusMessage = result.Message;
+        }
+    }
+
+    private StudentItemViewModel? FindStudent(int id)
+    {
+        foreach (var student in Students)
+        {
+            if (student.Id == id)
+                return student;
+        }
+        return null;
+    }
+
+    private EquipmentItemViewModel? FindEquipment(int id)
+    {
+        foreach (var equipment in Equipments)
+        {
+            if (equipment.Id == id)
+                return equipment;
+        }
+        return null;
     }
 
     private async Task BorrowAsync()
