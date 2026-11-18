@@ -31,13 +31,8 @@ public partial class App : global::Avalonia.Application
             }
             else
             {
-                // Fallback to in-memory repositories if DI is not configured (useful for designer/debug scenarios)
-                var studentRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryStudentRepository();
-                var equipmentRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryEquipmentRepository();
-                var borrowingRepo = new EquiBorrow.Infrastructure.Repositories.InMemoryBorrowingRepository();
-                var sqlInspector = new EquiBorrow.Infrastructure.Sql.NoOpSqlInspector();
-                var vm = new EquiBorrow.UI.ViewModels.MainViewModel(studentRepo, equipmentRepo, borrowingRepo, sqlInspector);
-                desktop.MainWindow = new MainWindow(vm);
+                throw new InvalidOperationException(
+                    "The application service provider is not configured. Configure dependency injection before starting Avalonia.");
             }
         }
 
