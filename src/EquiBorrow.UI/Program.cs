@@ -3,8 +3,8 @@ using Avalonia.ReactiveUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using EquiBorrow.Infrastructure.Persistence;
-using EquiBorrow.Infrastructure.Repositories;
 using EquiBorrow.Application.Interfaces;
+using EquiBorrow.Application.Services;
 using EquiBorrow.UI.ViewModels;
 
 
@@ -45,11 +45,14 @@ public static class Program
                    .AddInterceptors(interceptor)
             );
 
-        services.AddScoped<IStudentRepository, EfStudentRepository>();
-        services.AddScoped<IEquipmentRepository, EfEquipmentRepository>();
-        services.AddScoped<IBorrowingRepository, EfBorrowingRepository>();
-        services.AddScoped<EquiBorrow.Infrastructure.Sql.SqlInspector>();
-        services.AddScoped<IInspectionService>(sp => sp.GetRequiredService<EquiBorrow.Infrastructure.Sql.SqlInspector>());
+        services.AddSingleton<IUnitOfWorkFactory, EfUnitOfWorkFactory>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddTransient<BorrowEquipmentService>();
+        services.AddTransient<ReturnEquipmentService>();
+        services.AddTransient<ListStudentsService>();
+        services.AddTransient<ViewEquipmentCatalogService>();
+        services.AddTransient<ViewActiveBorrowingsService>();
+        services.AddSingleton<IInspectionService, EquiBorrow.Infrastructure.Sql.SqlInspector>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

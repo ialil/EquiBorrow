@@ -6,36 +6,37 @@ using EquiBorrow.Application.Interfaces;
 
 namespace EquiBorrow.Infrastructure.Sql;
 
-public class SqlInspector : IInspectionService
+public sealed class SqlInspector : IInspectionService
 {
-    private readonly EquipmentBorrowingDbContext _db;
+    private readonly IDbContextFactory<EquipmentBorrowingDbContext> _contextFactory;
 
-    public SqlInspector(EquipmentBorrowingDbContext db)
+    public SqlInspector(IDbContextFactory<EquipmentBorrowingDbContext> contextFactory)
     {
-        _db = db;
+        _contextFactory = contextFactory;
     }
 
     public Task<string> GetGeneratedSqlAsync()
     {
+        using var db = _contextFactory.CreateDbContext();
         var sb = new StringBuilder();
 
         // Students query
-        var studentsQ = _db.Students.Where(s => s.IsActive).OrderBy(s => s.Name);
+        var studentsQ = db.Students.Where(s => s.IsActive).OrderBy(s => s.Name);
         sb.AppendLine("-- Active students SQL");
         sb.AppendLine(studentsQ.ToQueryString());
         sb.AppendLine();
 
         // Available equipment
-        var equipmentQ = _db.Equipment.Where(e => e.IsAvailable).OrderBy(e => e.Name);
+        var equipmentQ = db.Equipment.Where(e => e.IsAvailable).OrderBy(e => e.Name);
         sb.AppendLine("-- Available equipment SQL");
         sb.AppendLine(equipmentQ.ToQueryString());
         sb.AppendLine();
 
         // Active borrowings with joins
-        var borrowQ = _db.Borrowings
+        var borrowQ = db.Borrowings
             .Where(b => b.Status == Domain.BorrowingStatus.Active)
-            .Join(_db.Students, b => b.StudentId, s => s.Id, (b, s) => new { b, s })
-            .Join(_db.Equipment, bs => bs.b.EquipmentId, e => e.Id, (bs, e) => new { bs.b, bs.s, e })
+            .Join(db.Students, b => b.StudentId, s => s.Id, (b, s) => new { b, s })
+            .Join(db.Equipment, bs => bs.b.EquipmentId, e => e.Id, (bs, e) => new { bs.b, bs.s, e })
             .Select(x => new { Student = x.s.Name, Equipment = x.e.Name, x.b.BorrowDate, x.b.ExpectedReturnDate });
 
         sb.AppendLine("-- Active borrowings join SQL");
