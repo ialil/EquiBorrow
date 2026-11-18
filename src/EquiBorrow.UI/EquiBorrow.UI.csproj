@@ -29,8 +29,9 @@
 	<PackageReference Include="Avalonia.ReactiveUI" Version="11.2.4" />
 	<PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
 	<PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.4" />
-	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.1" />
+	<PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
 	<PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
   <ItemGroup>
