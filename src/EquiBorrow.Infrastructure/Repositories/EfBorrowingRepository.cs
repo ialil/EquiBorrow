@@ -40,33 +40,35 @@ public sealed class EfBorrowingRepository : IBorrowingRepository
     public Task<IReadOnlyList<BorrowingDetails>> GetActiveDetailsAsync(CancellationToken cancellationToken = default) =>
         MaterializeDetailsAsync(
             GetDetailsQuery()
-                .Where(details => details.Status == BorrowingStatus.Active)
-                .OrderByDescending(details => details.BorrowDate)
-                .ThenBy(details => details.BorrowingId),
+                .Where(row => row.Borrowing.Status == BorrowingStatus.Active)
+                .OrderByDescending(row => row.Borrowing.BorrowDate)
+                .ThenBy(row => row.Borrowing.Id),
             cancellationToken);
 
     public Task<IReadOnlyList<BorrowingDetails>> GetHistoryByStudentAsync(int studentId, CancellationToken cancellationToken = default) =>
         MaterializeDetailsAsync(
             GetDetailsQuery()
-                .Where(details => details.StudentId == studentId)
-                .OrderByDescending(details => details.BorrowDate)
-                .ThenBy(details => details.BorrowingId),
+                .Where(row => row.Student.Id == studentId)
+                .OrderByDescending(row => row.Borrowing.BorrowDate)
+                .ThenBy(row => row.Borrowing.Id),
             cancellationToken);
 
     public Task<IReadOnlyList<BorrowingDetails>> GetHistoryByEquipmentAsync(int equipmentId, CancellationToken cancellationToken = default) =>
         MaterializeDetailsAsync(
             GetDetailsQuery()
-                .Where(details => details.EquipmentId == equipmentId)
-                .OrderByDescending(details => details.BorrowDate)
-                .ThenBy(details => details.BorrowingId),
+                .Where(row => row.Equipment.Id == equipmentId)
+                .OrderByDescending(row => row.Borrowing.BorrowDate)
+                .ThenBy(row => row.Borrowing.Id),
             cancellationToken);
 
     public async Task<IReadOnlyList<BorrowingDetails>> QueryDetailsAsync(BorrowingQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         var detailsQuery = GetDetailsQuery();
+        if (query.StudentId.HasValue)
+            detailsQuery = detailsQuery.Where(row => row.Student.Id == query.StudentId.Value);
         if (query.Status.HasValue)
-            detailsQuery = detailsQuery.Where(details => details.Status == query.Status.Value);
+            detailsQuery = detailsQuery.Where(row => row.Borrowing.Status == query.Status.Value);
 
         if (!string.IsNullOrWhiteSpace(query.SearchText))
         {
@@ -75,48 +77,63 @@ public sealed class EfBorrowingRepository : IBorrowingRepository
                 .Replace("%", "\\%")
                 .Replace("_", "\\_");
             var pattern = $"%{escapedText}%";
-            detailsQuery = detailsQuery.Where(details =>
-                EF.Functions.ILike(details.StudentNumber, pattern, "\\") ||
-                EF.Functions.ILike(details.StudentName, pattern, "\\") ||
-                EF.Functions.ILike(details.EquipmentIdentifier, pattern, "\\") ||
-                EF.Functions.ILike(details.EquipmentName, pattern, "\\"));
+            detailsQuery = detailsQuery.Where(row =>
+                EF.Functions.ILike(row.Student.StudentNumber, pattern, "\\") ||
+                EF.Functions.ILike(row.Student.Name, pattern, "\\") ||
+                EF.Functions.ILike(row.Equipment.Identifier, pattern, "\\") ||
+                EF.Functions.ILike(row.Equipment.Name, pattern, "\\"));
         }
 
-        IOrderedQueryable<BorrowingDetails> orderedQuery = (query.SortField, query.SortDirection) switch
+        IOrderedQueryable<BorrowingRow> orderedQuery = (query.SortField, query.SortDirection) switch
         {
-            (BorrowingSortField.BorrowDate, SortDirection.Ascending) => detailsQuery.OrderBy(details => details.BorrowDate).ThenBy(details => details.BorrowingId),
-            (BorrowingSortField.BorrowDate, SortDirection.Descending) => detailsQuery.OrderByDescending(details => details.BorrowDate).ThenBy(details => details.BorrowingId),
-            (BorrowingSortField.ExpectedReturnDate, SortDirection.Ascending) => detailsQuery.OrderBy(details => details.ExpectedReturnDate).ThenBy(details => details.BorrowingId),
-            (BorrowingSortField.ExpectedReturnDate, SortDirection.Descending) => detailsQuery.OrderByDescending(details => details.ExpectedReturnDate).ThenBy(details => details.BorrowingId),
+            (BorrowingSortField.BorrowDate, SortDirection.Ascending) => detailsQuery.OrderBy(row => row.Borrowing.BorrowDate).ThenBy(row => row.Borrowing.Id),
+            (BorrowingSortField.BorrowDate, SortDirection.Descending) => detailsQuery.OrderByDescending(row => row.Borrowing.BorrowDate).ThenBy(row => row.Borrowing.Id),
+            (BorrowingSortField.ExpectedReturnDate, SortDirection.Ascending) => detailsQuery.OrderBy(row => row.Borrowing.ExpectedReturnDate).ThenBy(row => row.Borrowing.Id),
+            (BorrowingSortField.ExpectedReturnDate, SortDirection.Descending) => detailsQuery.OrderByDescending(row => row.Borrowing.ExpectedReturnDate).ThenBy(row => row.Borrowing.Id),
             _ => throw new ArgumentOutOfRangeException(nameof(query), "Unsupported borrowing sort option.")
         };
 
         return await EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<BorrowingDetails>>(async () =>
-            await orderedQuery.ToListAsync(cancellationToken));
+            await ProjectDetails(orderedQuery).ToListAsync(cancellationToken));
     }
 
-    private IQueryable<BorrowingDetails> GetDetailsQuery() =>
+    private IQueryable<BorrowingRow> GetDetailsQuery() =>
         from borrowing in _db.Borrowings.AsNoTracking()
         join student in _db.Students.AsNoTracking() on borrowing.StudentId equals student.Id
         join equipment in _db.Equipment.AsNoTracking() on borrowing.EquipmentId equals equipment.Id
-        select new BorrowingDetails(
-            borrowing.Id,
-            student.Id,
-            student.StudentNumber,
-            student.Name,
-            equipment.Id,
-            equipment.Identifier,
-            equipment.Name,
-            borrowing.BorrowDate,
-            borrowing.ExpectedReturnDate,
-            borrowing.ReturnDate,
-            borrowing.Status,
-            borrowing.Version);
+        select new BorrowingRow
+        {
+            Borrowing = borrowing,
+            Student = student,
+            Equipment = equipment
+        };
+
+    private static IQueryable<BorrowingDetails> ProjectDetails(IQueryable<BorrowingRow> query) =>
+        query.Select(row => new BorrowingDetails(
+            row.Borrowing.Id,
+            row.Student.Id,
+            row.Student.StudentNumber,
+            row.Student.Name,
+            row.Equipment.Id,
+            row.Equipment.Identifier,
+            row.Equipment.Name,
+            row.Borrowing.BorrowDate,
+            row.Borrowing.ExpectedReturnDate,
+            row.Borrowing.ReturnDate,
+            row.Borrowing.Status,
+            row.Borrowing.Version));
 
     private static Task<IReadOnlyList<BorrowingDetails>> MaterializeDetailsAsync(
-        IQueryable<BorrowingDetails> query,
+        IQueryable<BorrowingRow> query,
         CancellationToken cancellationToken) =>
         EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<BorrowingDetails>>(async () =>
-            await query.ToListAsync(cancellationToken));
+            await ProjectDetails(query).ToListAsync(cancellationToken));
+
+    private sealed class BorrowingRow
+    {
+        public Borrowing Borrowing { get; init; } = null!;
+        public Student Student { get; init; } = null!;
+        public Equipment Equipment { get; init; } = null!;
+    }
 
 }

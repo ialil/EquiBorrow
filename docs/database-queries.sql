@@ -215,3 +215,48 @@ FROM "Students" AS s
 SELECT e."Id", e."Description", e."Identifier", e."IdentifierKey", e."IsAvailable", e."Name"
 FROM "Equipment" AS e
 
+SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+
+SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+
+SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261118111549_AddConcurrencyToken', '8.0.11');
+
+
+SELECT EXISTS (
+    SELECT 1
+    FROM "Students" AS s)
+
+SELECT s."Id", s."Contact", s."IsActive", s."Name", s."StudentNumber", s."StudentNumberKey", s.xmin
+FROM "Students" AS s
+ORDER BY s."Name"
+
+SELECT e."Id", e."Description", e."Identifier", e."IdentifierKey", e."IsAvailable", e."Name", e.xmin
+FROM "Equipment" AS e
+ORDER BY e."Name"
+

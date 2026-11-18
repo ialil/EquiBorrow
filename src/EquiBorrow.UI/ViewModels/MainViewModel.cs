@@ -269,7 +269,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            StatusMessage = $"Operation failed: {exception.Message}";
+            ReportUnexpectedException(exception);
         }
         finally
         {
@@ -287,7 +287,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            StatusMessage = $"Operation failed: {exception.Message}";
+            ReportUnexpectedException(exception);
+        }
+    }
+
+    private void ReportUnexpectedException(Exception exception)
+    {
+        try
+        {
+            Directory.CreateDirectory("logs");
+            File.AppendAllText(
+                Path.Combine("logs", "app.log"),
+                $"{DateTimeOffset.Now:O}{Environment.NewLine}{exception}{Environment.NewLine}{Environment.NewLine}");
+            StatusMessage = "An unexpected error occurred. Details were written to logs/app.log.";
+        }
+        catch (IOException)
+        {
+            StatusMessage = "An unexpected error occurred. Details could not be written to logs/app.log.";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "An unexpected error occurred. Details could not be written to logs/app.log.";
         }
     }
 

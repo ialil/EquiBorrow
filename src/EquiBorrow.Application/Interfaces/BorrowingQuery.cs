@@ -16,6 +16,7 @@ public enum SortDirection
 
 public sealed record BorrowingQuery
 {
+    public int? StudentId { get; init; }
     public string? SearchText { get; init; }
     public BorrowingStatus? Status { get; init; }
     public BorrowingSortField SortField { get; init; } = BorrowingSortField.BorrowDate;

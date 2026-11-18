@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EquiBorrow.Application.Interfaces;
@@ -20,10 +19,13 @@ public sealed class ViewActiveBorrowingsService
         try
         {
             await using var unitOfWork = _unitOfWorkFactory.Create();
-            var activeBorrowings = await unitOfWork.Borrowings.GetActiveDetailsAsync(cancellationToken);
-            var result = studentId.HasValue
-                ? activeBorrowings.Where(borrowing => borrowing.StudentId == studentId.Value).ToArray()
-                : activeBorrowings;
+            var result = await unitOfWork.Borrowings.QueryDetailsAsync(
+                new BorrowingQuery
+                {
+                    StudentId = studentId,
+                    Status = BorrowingStatus.Active
+                },
+                cancellationToken);
             return OperationResult<IReadOnlyList<BorrowingDetails>>.Succeeded(result, $"Loaded {result.Count} active borrowings.");
         }
         catch (PersistenceFailureException)
