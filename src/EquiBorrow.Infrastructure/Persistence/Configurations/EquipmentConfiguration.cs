@@ -21,6 +21,7 @@ public class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Description).HasMaxLength(500);
         builder.Property(e => e.IsAvailable).IsRequired();
+        builder.Property(e => e.Version).HasColumnName("xmin").IsRowVersion();
 
         builder.Property(e => e.IdentifierKey)
             .HasComputedColumnSql("lower(btrim(\"Identifier\"))", stored: true);

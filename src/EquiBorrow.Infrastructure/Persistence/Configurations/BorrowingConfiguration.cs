@@ -21,6 +21,7 @@ public class BorrowingConfiguration : IEntityTypeConfiguration<Borrowing>
         builder.Property(b => b.ExpectedReturnDate).HasColumnType("date").IsRequired();
         builder.Property(b => b.ReturnDate).HasColumnType("date").IsRequired(false);
         builder.Property(b => b.Status).IsRequired();
+        builder.Property(b => b.Version).HasColumnName("xmin").IsRowVersion();
 
         builder.HasOne<Student>().WithMany()
             .HasForeignKey(b => b.StudentId)

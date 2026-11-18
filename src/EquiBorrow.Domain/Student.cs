@@ -9,6 +9,7 @@ public class Student
     public string Name { get; set; } = string.Empty;
     public string? Contact { get; set; }
     public bool IsActive { get; set; } = true;
+    public uint Version { get; set; }
 
     public Student() { }
 

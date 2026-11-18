@@ -11,6 +11,7 @@ public class Borrowing
     public DateOnly ExpectedReturnDate { get; set; }
     public BorrowingStatus Status { get; set; }
     public DateOnly? ReturnDate { get; set; }
+    public uint Version { get; set; }
 
     public Borrowing() { }
 

@@ -21,6 +21,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(s => s.Name).IsRequired().HasMaxLength(200);
         builder.Property(s => s.Contact).HasMaxLength(200);
         builder.Property(s => s.IsActive).IsRequired();
+        builder.Property(s => s.Version).HasColumnName("xmin").IsRowVersion();
 
         builder.Property(s => s.StudentNumberKey)
             .HasComputedColumnSql("lower(btrim(\"StudentNumber\"))", stored: true);
