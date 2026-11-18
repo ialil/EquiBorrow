@@ -1,60 +1,78 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
+using EquiBorrow.Application;
 using EquiBorrow.Application.Interfaces;
-using EquiBorrow.Domain;
+using EquiBorrow.Application.Services;
 
 namespace EquiBorrow.UI.ViewModels;
 
-public class StudentItemViewModel
+public sealed class StudentItemViewModel
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public bool IsActive { get; init; }
+    public uint Version { get; init; }
 }
 
-public class EquipmentItemViewModel
+public sealed class EquipmentItemViewModel
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public bool IsAvailable { get; set; }
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public bool IsAvailable { get; init; }
+    public uint Version { get; init; }
 }
 
-public class BorrowedItemViewModel
+public sealed class BorrowedItemViewModel
 {
-    public int EquipmentId { get; set; }
-    public string EquipmentName { get; set; } = string.Empty;
-    public DateOnly BorrowDate { get; set; }
+    public int BorrowingId { get; init; }
+    public int EquipmentId { get; init; }
+    public string EquipmentName { get; init; } = string.Empty;
+    public DateOnly BorrowDate { get; init; }
+    public uint Version { get; init; }
 }
 
-public class MainViewModel : INotifyPropertyChanged
+public sealed class MainViewModel : INotifyPropertyChanged
 {
-    private readonly IStudentRepository _studentRepository;
-    private readonly IEquipmentRepository _equipmentRepository;
-    private readonly IBorrowingRepository _borrowingRepository;
+    private readonly ListStudentsService _listStudentsService;
+    private readonly ViewEquipmentCatalogService _viewEquipmentCatalogService;
+    private readonly ViewActiveBorrowingsService _viewActiveBorrowingsService;
+    private readonly BorrowEquipmentService _borrowEquipmentService;
     private readonly IInspectionService _inspectionService;
+    private readonly TimeProvider _timeProvider;
 
     public ObservableCollection<StudentItemViewModel> Students { get; } = new();
     public ObservableCollection<EquipmentItemViewModel> Equipments { get; } = new();
     public ObservableCollection<BorrowedItemViewModel> StudentBorrows { get; } = new();
 
     private StudentItemViewModel? _selectedStudent;
-    public StudentItemViewModel? SelectedStudent 
-    { 
-        get => _selectedStudent; 
-        set 
-        { 
-            _selectedStudent = value; 
+    public StudentItemViewModel? SelectedStudent
+    {
+        get => _selectedStudent;
+        set
+        {
+            if (_selectedStudent == value) return;
+            _selectedStudent = value;
             OnPropertyChanged(nameof(SelectedStudent));
-            _ = RefreshStudentBorrowsAsync();
-        } 
+            StudentBorrows.Clear();
+            if (value is not null)
+                Observe(LoadStudentBorrowingsAsync(value.Id));
+        }
     }
 
     private EquipmentItemViewModel? _selectedEquipment;
-    public EquipmentItemViewModel? SelectedEquipment { get => _selectedEquipment; set { _selectedEquipment = value; OnPropertyChanged(nameof(SelectedEquipment)); } }
+    public EquipmentItemViewModel? SelectedEquipment
+    {
+        get => _selectedEquipment;
+        set
+        {
+            if (_selectedEquipment == value) return;
+            _selectedEquipment = value;
+            OnPropertyChanged(nameof(SelectedEquipment));
+        }
+    }
 
     private string _newStudentName = string.Empty;
     public string NewStudentName { get => _newStudentName; set { _newStudentName = value; OnPropertyChanged(nameof(NewStudentName)); } }
@@ -68,7 +86,9 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _newEquipmentIsAvailable;
     public bool NewEquipmentIsAvailable { get => _newEquipmentIsAvailable; set { _newEquipmentIsAvailable = value; OnPropertyChanged(nameof(NewEquipmentIsAvailable)); } }
 
-    private string _statusMessage = string.Empty;
+    private string _statusMessage = "Available in a later step";
+    private string _studentsMessage = string.Empty;
+    private string _equipmentMessage = string.Empty;
     public string StatusMessage { get => _statusMessage; set { _statusMessage = value; OnPropertyChanged(nameof(StatusMessage)); } }
 
     public RelayCommand AddStudentCommand { get; }
@@ -88,218 +108,168 @@ public class MainViewModel : INotifyPropertyChanged
             if (_isBusy == value) return;
             _isBusy = value;
             OnPropertyChanged(nameof(IsBusy));
-            // Update command availability
             BorrowCommand?.RaiseCanExecuteChanged();
-            AddStudentCommand?.RaiseCanExecuteChanged();
-            UpdateStudentCommand?.RaiseCanExecuteChanged();
-            AddEquipmentCommand?.RaiseCanExecuteChanged();
-            UpdateEquipmentCommand?.RaiseCanExecuteChanged();
+            RefreshCommand?.RaiseCanExecuteChanged();
             InspectSqlCommand?.RaiseCanExecuteChanged();
         }
     }
 
-    public MainViewModel(IStudentRepository studentRepository, IEquipmentRepository equipmentRepository, IBorrowingRepository borrowingRepository, IInspectionService inspectionService)
+    public MainViewModel(
+        ListStudentsService listStudentsService,
+        ViewEquipmentCatalogService viewEquipmentCatalogService,
+        ViewActiveBorrowingsService viewActiveBorrowingsService,
+        BorrowEquipmentService borrowEquipmentService,
+        IInspectionService inspectionService,
+        TimeProvider timeProvider)
     {
-        _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
-        _equipmentRepository = equipmentRepository ?? throw new ArgumentNullException(nameof(equipmentRepository));
-        _borrowingRepository = borrowingRepository ?? throw new ArgumentNullException(nameof(borrowingRepository));
+        _listStudentsService = listStudentsService ?? throw new ArgumentNullException(nameof(listStudentsService));
+        _viewEquipmentCatalogService = viewEquipmentCatalogService ?? throw new ArgumentNullException(nameof(viewEquipmentCatalogService));
+        _viewActiveBorrowingsService = viewActiveBorrowingsService ?? throw new ArgumentNullException(nameof(viewActiveBorrowingsService));
+        _borrowEquipmentService = borrowEquipmentService ?? throw new ArgumentNullException(nameof(borrowEquipmentService));
         _inspectionService = inspectionService ?? throw new ArgumentNullException(nameof(inspectionService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        AddStudentCommand = new RelayCommand(_ => AddStudentAsync());
-        UpdateStudentCommand = new RelayCommand(_ => UpdateStudentAsync());
+        AddStudentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        UpdateStudentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        AddEquipmentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        UpdateEquipmentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        BorrowCommand = new RelayCommand(_ => RunCommandAsync(BorrowAsync), _ => !IsBusy);
+        RefreshCommand = new RelayCommand(_ => RunCommandAsync(RefreshAsync), _ => !IsBusy);
+        InspectSqlCommand = new RelayCommand(_ => RunCommandAsync(InspectSqlAsync), _ => !IsBusy);
 
-        AddEquipmentCommand = new RelayCommand(_ => AddEquipment(), _ => !IsBusy);
-        UpdateEquipmentCommand = new RelayCommand(_ => UpdateEquipment(), _ => !IsBusy);
-
-        InspectSqlCommand = new RelayCommand(_ => InspectSqlAsync(), _ => !IsBusy);
-
-        BorrowCommand = new RelayCommand(_ => BorrowAsync(), _ => !IsBusy);
-        RefreshCommand = new RelayCommand(_ => Refresh());
-
-        // InspectSqlCommand already assigned with CanExecute predicate above
-
-        // Load data from repositories
-        LoadDataAsync();
+        RunCommandAsync(LoadDataAsync);
     }
 
-    private async void LoadDataAsync()
+    private async Task LoadDataAsync()
     {
         await LoadStudentsAsync();
         await LoadEquipmentAsync();
+        StatusMessage = $"{_studentsMessage} {_equipmentMessage} Available in a later step";
     }
 
     private async Task LoadStudentsAsync()
     {
-        var students = await _studentRepository.GetAllAsync();
-        Students.Clear();
-        foreach (var student in students.OrderBy(s => s.Name))
+        var result = await _listStudentsService.ExecuteAsync();
+        _studentsMessage = result.Message;
+        if (result.Outcome != OperationOutcome.Success || result.Value is null)
         {
-            Students.Add(new StudentItemViewModel 
-            { 
-                Id = student.Id, 
-                Name = student.Name, 
-                IsActive = student.IsActive 
+            StatusMessage = result.Message;
+            return;
+        }
+
+        Students.Clear();
+        foreach (var student in result.Value)
+        {
+            Students.Add(new StudentItemViewModel
+            {
+                Id = student.Id,
+                Name = student.Name,
+                IsActive = student.IsActive,
+                Version = student.Version
             });
         }
-        StatusMessage = $"Loaded {students.Count} students.";
+        StatusMessage = result.Message;
     }
 
     private async Task LoadEquipmentAsync()
     {
-        var equipments = await _equipmentRepository.GetAllAsync();
-        Equipments.Clear();
-        foreach (var equipment in equipments.OrderBy(e => e.Name))
+        var result = await _viewEquipmentCatalogService.ExecuteAsync();
+        _equipmentMessage = result.Message;
+        if (result.Outcome != OperationOutcome.Success || result.Value is null)
         {
-            Equipments.Add(new EquipmentItemViewModel 
-            { 
-                Id = equipment.Id, 
-                Name = equipment.Name, 
-                IsAvailable = equipment.IsAvailable 
+            StatusMessage = result.Message;
+            return;
+        }
+
+        Equipments.Clear();
+        foreach (var equipment in result.Value)
+        {
+            Equipments.Add(new EquipmentItemViewModel
+            {
+                Id = equipment.Id,
+                Name = equipment.Name,
+                IsAvailable = equipment.IsAvailable,
+                Version = equipment.Version
             });
         }
-        StatusMessage = $"Loaded {equipments.Count} equipment items.";
+        StatusMessage = result.Message;
     }
 
-    private async void AddStudentAsync()
+    private async Task LoadStudentBorrowingsAsync(int studentId)
     {
-        if (string.IsNullOrWhiteSpace(NewStudentName)) { StatusMessage = "Student name required."; return; }
-        IsBusy = true;
-        try
+        var result = await _viewActiveBorrowingsService.ExecuteAsync(studentId);
+        if (result.Outcome != OperationOutcome.Success || result.Value is null)
         {
-            var domainStudent = new Student { Name = NewStudentName, IsActive = NewStudentIsActive };
-            await _studentRepository.AddAsync(domainStudent);
-            await LoadStudentsAsync();
-            NewStudentName = string.Empty;
-            StatusMessage = "Student added.";
+            StatusMessage = result.Message;
+            return;
         }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error adding student: {ex.Message}";
-        }
-        finally { IsBusy = false; }
-    }
 
-    private async void InspectSqlAsync()
-    {
-        IsBusy = true;
-        try
+        StudentBorrows.Clear();
+        foreach (var borrowing in result.Value)
         {
-            var sql = await _inspectionService.GetGeneratedSqlAsync();
-            // Write to docs/database-queries.sql (lab-required filename)
-            try
+            StudentBorrows.Add(new BorrowedItemViewModel
             {
-                // Write to the repository docs folder (resolve relative to app base directory)
-                var baseDir = AppContext.BaseDirectory ?? string.Empty;
-                var repoDocsPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir, "..", "..", "..", "docs", "database-queries.sql"));
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(repoDocsPath) ?? "docs");
-                System.IO.File.WriteAllText(repoDocsPath, sql);
-                StatusMessage = $"Generated SQL written to {repoDocsPath}";
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"SQL retrieved but failed to write file: {ex.Message}";
-            }
+                BorrowingId = borrowing.BorrowingId,
+                EquipmentId = borrowing.EquipmentId,
+                EquipmentName = borrowing.EquipmentName,
+                BorrowDate = borrowing.BorrowDate,
+                Version = borrowing.Version
+            });
         }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error inspecting SQL: {ex.Message}";
-        }
-        finally { IsBusy = false; }
+        StatusMessage = result.Message;
     }
 
-    private async void UpdateStudentAsync()
+    private async Task BorrowAsync()
     {
-        if (SelectedStudent == null) { StatusMessage = "Select a student to update."; return; }
-        IsBusy = true;
-        try
-        {
-            var domainStudent = new Student { Id = SelectedStudent.Id, Name = NewStudentName, IsActive = NewStudentIsActive };
-            await _studentRepository.UpdateAsync(domainStudent);
-            await LoadStudentsAsync();
-            StatusMessage = "Student updated.";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error updating student: {ex.Message}";
-        }
-        finally { IsBusy = false; }
-    }
+        if (SelectedStudent is null) { StatusMessage = "Select a student to borrow."; return; }
+        if (SelectedEquipment is null) { StatusMessage = "Select equipment to borrow."; return; }
 
-    private void AddEquipment()
-    {
-        AddEquipmentAsync();
-    }
-
-    private async void AddEquipmentAsync()
-    {
-        if (string.IsNullOrWhiteSpace(NewEquipmentName)) { StatusMessage = "Equipment name required."; return; }
-        IsBusy = true;
-        try
+        var studentId = SelectedStudent.Id;
+        var equipmentId = SelectedEquipment.Id;
+        // TODO: Replace this temporary date with the UC-03 date picker.
+        var expectedReturnDate = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime).AddDays(7);
+        var result = await _borrowEquipmentService.ExecuteAsync(studentId, equipmentId, expectedReturnDate);
+        if (result.Outcome is OperationOutcome.Success or OperationOutcome.Stale)
         {
-            var domainEquipment = new Equipment { Name = NewEquipmentName, IsAvailable = NewEquipmentIsAvailable };
-            await _equipmentRepository.AddAsync(domainEquipment);
             await LoadEquipmentAsync();
-            NewEquipmentName = string.Empty;
-            StatusMessage = "Equipment added.";
+            await LoadStudentBorrowingsAsync(studentId);
         }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error adding equipment: {ex.Message}";
-        }
-        finally { IsBusy = false; }
+        StatusMessage = result.Message;
     }
 
-    private void UpdateEquipment()
+    private async Task RefreshAsync()
     {
-        if (SelectedEquipment == null) { StatusMessage = "Select equipment to update."; return; }
-        SelectedEquipment.Name = NewEquipmentName;
-        SelectedEquipment.IsAvailable = NewEquipmentIsAvailable;
-        StatusMessage = "Equipment updated.";
+        await LoadDataAsync();
+        if (SelectedStudent is not null)
+            await LoadStudentBorrowingsAsync(SelectedStudent.Id);
     }
 
-    private async void BorrowAsync()
+    private async Task InspectSqlAsync()
     {
-        if (SelectedStudent == null) { StatusMessage = "Select a student to borrow."; return; }
-        if (SelectedEquipment == null) { StatusMessage = "Select equipment to borrow."; return; }
-        if (!SelectedEquipment.IsAvailable) { StatusMessage = "Equipment not available."; return; }
+        var sql = await _inspectionService.GetGeneratedSqlAsync();
+        var baseDirectory = AppContext.BaseDirectory;
+        var outputPath = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "docs", "database-queries.sql"));
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? "docs");
+        await File.WriteAllTextAsync(outputPath, sql);
+        StatusMessage = $"Generated SQL written to {outputPath}";
+    }
+
+    private void RunCommandAsync(Func<Task> operation)
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        Observe(ExecuteCommandAsync(operation));
+    }
+
+    private async Task ExecuteCommandAsync(Func<Task> operation)
+    {
         try
         {
-            // Disable UI selection to avoid duplicate clicks (caller will refresh UI state)
-            SelectedEquipment.IsAvailable = false;
-
-            // Update in repository (persist equipment availability)
-            var equipment = await _equipment_repository_GetForUpdateAsync(SelectedEquipment.Id);
-            if (equipment == null)
-            {
-                StatusMessage = "Equipment not found in repository.";
-                return;
-            }
-
-            equipment.IsAvailable = false;
-            await _equipmentRepository.UpdateAsync(equipment);
-
-            // Capture display names before refreshing UI (refresh may replace view-model objects)
-            var studentName = SelectedStudent?.Name ?? "<unknown student>";
-            var equipmentName = SelectedEquipment?.Name ?? "<unknown equipment>";
-
-            // Create borrowing record in repository
-            var borrowing = new Borrowing(0, SelectedStudent.Id, SelectedEquipment.Id,DateOnly.FromDateTime(DateTime.Now), DateOnly.FromDateTime(DateTime.Now).AddDays(14));
-            // Refresh UI lists so equipment availability and borrow history reflect persisted state
-            var selectedEquipmentId = SelectedEquipment?.Id;
-            await LoadEquipmentAsync();
-            if (selectedEquipmentId != null)
-            {
-                var reselect = Equipments.FirstOrDefault(e => e.Id == selectedEquipmentId.Value);
-                if (reselect != null)
-                    SelectedEquipment = reselect;
-            }
-            await RefreshStudentBorrowsAsync();
-
-            StatusMessage = $"{studentName} borrowed {equipmentName}.";
+            await operation();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            StatusMessage = $"Error borrowing equipment: {ex.Message}";
+            StatusMessage = $"Operation failed: {exception.Message}";
         }
         finally
         {
@@ -307,39 +277,19 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    // Helper to get equipment for update; preserves existing repository abstraction
-    private async Task<Equipment?> _equipment_repository_GetForUpdateAsync(int id)
+    private void Observe(Task task) => _ = ObserveAsync(task);
+
+    private async Task ObserveAsync(Task task)
     {
-        return await _equipmentRepository.GetByIdAsync(id);
-    }
-
-    private async Task RefreshStudentBorrowsAsync()
-    {
-        StudentBorrows.Clear();
-        if (SelectedStudent == null)
-            return;
-
-        var borrowings = await _borrowingRepository.GetAllAsync();
-        var studentBorrows = borrowings
-            .Where(b => b.StudentId == SelectedStudent.Id && b.Status == BorrowingStatus.Active)
-            .ToList();
-
-        foreach (var borrow in studentBorrows)
+        try
         {
-            var equipment = await _equipmentRepository.GetByIdAsync(borrow.EquipmentId);
-            if (equipment != null)
-            {
-                StudentBorrows.Add(new BorrowedItemViewModel
-                {
-                    EquipmentId = equipment.Id,
-                    EquipmentName = equipment.Name,
-                    BorrowDate = borrow.BorrowDate
-                });
-            }
+            await task;
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"Operation failed: {exception.Message}";
         }
     }
-
-    private void Refresh() => StatusMessage = "Refreshed.";
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

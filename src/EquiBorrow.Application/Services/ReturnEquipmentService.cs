@@ -28,6 +28,8 @@ public sealed class ReturnEquipmentService
                 return OperationResult.Stale("The borrowing no longer exists. Refresh the data.");
             if (borrowing.Status == BorrowingStatus.Returned)
                 return OperationResult.Rejected("This borrowing has already been returned.");
+            if (today < borrowing.BorrowDate)
+                return OperationResult.Rejected("Return date cannot precede the borrow date.");
 
             var equipment = await unitOfWork.Equipment.GetByIdForUpdateAsync(borrowing.EquipmentId, cancellationToken);
             if (equipment is null)
@@ -68,7 +70,7 @@ public sealed class ReturnEquipmentService
         }
         catch (Exception)
         {
-            return OperationResult.Unknown(
+            return OperationResult.UnknownOutcome(
                 "The commit result could not be verified. Refresh and check the borrowing before retrying.");
         }
     }

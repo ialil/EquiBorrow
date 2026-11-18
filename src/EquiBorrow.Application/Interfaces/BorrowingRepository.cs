@@ -15,9 +15,4 @@ public interface IBorrowingRepository
     Task<IReadOnlyList<BorrowingDetails>> GetHistoryByStudentAsync(int studentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<BorrowingDetails>> GetHistoryByEquipmentAsync(int equipmentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<BorrowingDetails>> QueryDetailsAsync(BorrowingQuery query, CancellationToken cancellationToken = default);
-
-    Task AddAsync(Borrowing borrowing, CancellationToken cancellationToken = default);
-    Task<int> GetActiveCountByStudentIdAsync(int studentId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Borrowing>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 }

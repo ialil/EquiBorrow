@@ -120,10 +120,12 @@ internal static class PersistenceExceptionTranslator
 
     public static bool IsUncertainCommit(Exception exception)
     {
-        if (exception is TimeoutException or IOException or SocketException)
+        if (exception is TimeoutException or IOException or SocketException or OperationCanceledException)
             return true;
 
-        if (exception is NpgsqlException npgsqlException && npgsqlException.IsTransient)
+        if (exception is NpgsqlException npgsqlException &&
+            exception is not PostgresException &&
+            npgsqlException.IsTransient)
             return true;
 
         return exception.InnerException is not null && IsUncertainCommit(exception.InnerException);

@@ -14,7 +14,4 @@ public interface IEquipmentRepository
     Task<IReadOnlyList<Equipment>> GetByIdsForUpdateAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<bool> ExistsByIdentifierAsync(string identifier, int? excludeId = null, CancellationToken cancellationToken = default);
     void Add(Equipment equipment, CancellationToken cancellationToken = default);
-
-    Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Equipment equipment, CancellationToken cancellationToken = default);
 }

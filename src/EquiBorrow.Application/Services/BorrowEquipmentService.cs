@@ -110,7 +110,7 @@ public sealed class BorrowEquipmentService
         }
         catch (Exception)
         {
-            return OperationResult<BorrowingDetails>.Unknown(
+            return OperationResult<BorrowingDetails>.UnknownOutcome(
                 "The commit result could not be verified. Refresh and check the borrowing before retrying.");
         }
     }

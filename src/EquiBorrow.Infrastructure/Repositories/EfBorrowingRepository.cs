@@ -95,19 +95,6 @@ public sealed class EfBorrowingRepository : IBorrowingRepository
             await orderedQuery.ToListAsync(cancellationToken));
     }
 
-    public async Task AddAsync(Borrowing borrowing, CancellationToken cancellationToken = default) =>
-        await _db.Borrowings.AddAsync(borrowing, cancellationToken);
-
-    public Task<int> GetActiveCountByStudentIdAsync(int studentId, CancellationToken cancellationToken = default) =>
-        GetActiveCountByStudentAsync(studentId, cancellationToken);
-
-    public Task<IReadOnlyList<Borrowing>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        GetBorrowingsAsync(_db.Borrowings.AsNoTracking(), cancellationToken);
-
-    public Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        EfPersistenceExecutor.ExecuteAsync(() =>
-            _db.Borrowings.AsNoTracking().SingleOrDefaultAsync(borrowing => borrowing.Id == id, cancellationToken));
-
     private IQueryable<BorrowingDetails> GetDetailsQuery() =>
         from borrowing in _db.Borrowings.AsNoTracking()
         join student in _db.Students.AsNoTracking() on borrowing.StudentId equals student.Id
@@ -132,9 +119,4 @@ public sealed class EfBorrowingRepository : IBorrowingRepository
         EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<BorrowingDetails>>(async () =>
             await query.ToListAsync(cancellationToken));
 
-    private static Task<IReadOnlyList<Borrowing>> GetBorrowingsAsync(
-        IQueryable<Borrowing> query,
-        CancellationToken cancellationToken) =>
-        EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<Borrowing>>(async () =>
-            await query.ToListAsync(cancellationToken));
 }

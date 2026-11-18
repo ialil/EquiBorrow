@@ -8,7 +8,7 @@ public sealed record OperationResult(OperationOutcome Outcome, string Message)
     public static OperationResult Rejected(string message) => new(OperationOutcome.Rejected, message);
     public static OperationResult Stale(string message) => new(OperationOutcome.Stale, message);
     public static OperationResult Failed(string message) => new(OperationOutcome.Failed, message);
-    public static OperationResult Unknown(string message) => new(OperationOutcome.UnknownOutcome, message);
+    public static OperationResult UnknownOutcome(string message) => new(OperationOutcome.UnknownOutcome, message);
 }
 
 public sealed record OperationResult<T>(OperationOutcome Outcome, string Message, T? Value)
@@ -19,5 +19,5 @@ public sealed record OperationResult<T>(OperationOutcome Outcome, string Message
     public static OperationResult<T> Rejected(string message) => new(OperationOutcome.Rejected, message, default);
     public static OperationResult<T> Stale(string message) => new(OperationOutcome.Stale, message, default);
     public static OperationResult<T> Failed(string message) => new(OperationOutcome.Failed, message, default);
-    public static OperationResult<T> Unknown(string message) => new(OperationOutcome.UnknownOutcome, message, default);
+    public static OperationResult<T> UnknownOutcome(string message) => new(OperationOutcome.UnknownOutcome, message, default);
 }

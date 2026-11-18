@@ -31,6 +31,8 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
 
     public async Task<IReadOnlyList<Equipment>> GetByIdsForUpdateAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(ids);
+        cancellationToken.ThrowIfCancellationRequested();
         var idList = ids.Distinct().ToArray();
         if (idList.Length == 0)
             return Array.Empty<Equipment>();
@@ -51,16 +53,6 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
         _db.Equipment.Add(equipment);
-    }
-
-    public async Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default) =>
-        await _db.Equipment.AddAsync(equipment, cancellationToken);
-
-    public Task UpdateAsync(Equipment equipment, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        _db.Equipment.Update(equipment);
-        return Task.CompletedTask;
     }
 
     private static Task<IReadOnlyList<Equipment>> GetListAsync(

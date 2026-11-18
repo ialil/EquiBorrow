@@ -23,7 +23,7 @@
 		  </ListBox.ItemTemplate>
 		</ListBox>
 
-		<TextBlock Text="Borrowed Items (Memory)" FontWeight="Bold" FontSize="12" Margin="0,12,0,8"/>
+		<TextBlock Text="Active Borrowings" FontWeight="Bold" FontSize="12" Margin="0,12,0,8"/>
 		<ListBox ItemsSource="{Binding StudentBorrows}" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto">
 		  <ListBox.ItemTemplate>
 			<DataTemplate>

@@ -44,13 +44,4 @@ public sealed class EfStudentRepository : IStudentRepository
         _db.Students.Add(student);
     }
 
-    public async Task AddAsync(Student student, CancellationToken cancellationToken = default) =>
-        await _db.Students.AddAsync(student, cancellationToken);
-
-    public Task UpdateAsync(Student student, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        _db.Students.Update(student);
-        return Task.CompletedTask;
-    }
 }

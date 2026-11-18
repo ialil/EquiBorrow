@@ -12,7 +12,4 @@ public interface IStudentRepository
     Task<Student?> GetByIdForUpdateAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNumberAsync(string number, int? excludeId = null, CancellationToken cancellationToken = default);
     void Add(Student student, CancellationToken cancellationToken = default);
-
-    Task AddAsync(Student student, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Student student, CancellationToken cancellationToken = default);
 }
