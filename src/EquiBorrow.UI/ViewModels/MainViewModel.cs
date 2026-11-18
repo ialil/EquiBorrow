@@ -73,10 +73,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     public RelayCommand AddStudentCommand { get; }
     public RelayCommand UpdateStudentCommand { get; }
-    public RelayCommand RemoveStudentCommand { get; }
     public RelayCommand AddEquipmentCommand { get; }
     public RelayCommand UpdateEquipmentCommand { get; }
-    public RelayCommand RemoveEquipmentCommand { get; }
     public RelayCommand BorrowCommand { get; }
     public RelayCommand RefreshCommand { get; }
     public RelayCommand InspectSqlCommand { get; }
@@ -94,10 +92,8 @@ public class MainViewModel : INotifyPropertyChanged
             BorrowCommand?.RaiseCanExecuteChanged();
             AddStudentCommand?.RaiseCanExecuteChanged();
             UpdateStudentCommand?.RaiseCanExecuteChanged();
-            RemoveStudentCommand?.RaiseCanExecuteChanged();
             AddEquipmentCommand?.RaiseCanExecuteChanged();
             UpdateEquipmentCommand?.RaiseCanExecuteChanged();
-            RemoveEquipmentCommand?.RaiseCanExecuteChanged();
             InspectSqlCommand?.RaiseCanExecuteChanged();
         }
     }
@@ -111,11 +107,9 @@ public class MainViewModel : INotifyPropertyChanged
 
         AddStudentCommand = new RelayCommand(_ => AddStudentAsync());
         UpdateStudentCommand = new RelayCommand(_ => UpdateStudentAsync());
-        RemoveStudentCommand = new RelayCommand(_ => RemoveStudentAsync());
 
         AddEquipmentCommand = new RelayCommand(_ => AddEquipment(), _ => !IsBusy);
         UpdateEquipmentCommand = new RelayCommand(_ => UpdateEquipment(), _ => !IsBusy);
-        RemoveEquipmentCommand = new RelayCommand(_ => RemoveEquipment(), _ => !IsBusy);
 
         InspectSqlCommand = new RelayCommand(_ => InspectSqlAsync(), _ => !IsBusy);
 
@@ -231,24 +225,6 @@ public class MainViewModel : INotifyPropertyChanged
         finally { IsBusy = false; }
     }
 
-    private async void RemoveStudentAsync()
-    {
-        if (SelectedStudent == null) { StatusMessage = "Select a student to remove."; return; }
-        IsBusy = true;
-        try
-        {
-            await _studentRepository.DeleteAsync(SelectedStudent.Id);
-            await LoadStudentsAsync();
-            SelectedStudent = null;
-            StatusMessage = "Student removed.";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error removing student: {ex.Message}";
-        }
-        finally { IsBusy = false; }
-    }
-
     private void AddEquipment()
     {
         AddEquipmentAsync();
@@ -279,30 +255,6 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedEquipment.Name = NewEquipmentName;
         SelectedEquipment.IsAvailable = NewEquipmentIsAvailable;
         StatusMessage = "Equipment updated.";
-    }
-
-    private void RemoveEquipment()
-    {
-        if (SelectedEquipment == null) { StatusMessage = "Select equipment to remove."; return; }
-        RemoveEquipmentAsync();
-    }
-
-    private async void RemoveEquipmentAsync()
-    {
-        if (SelectedEquipment == null) { StatusMessage = "Select equipment to remove."; return; }
-        IsBusy = true;
-        try
-        {
-            await _equipmentRepository.DeleteAsync(SelectedEquipment.Id);
-            await LoadEquipmentAsync();
-            SelectedEquipment = null;
-            StatusMessage = "Equipment removed.";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error removing equipment: {ex.Message}";
-        }
-        finally { IsBusy = false; }
     }
 
     private async void BorrowAsync()

@@ -41,7 +41,6 @@
 		  <StackPanel Orientation="Horizontal" Spacing="8">
 			<Button Content="Add Student" Command="{Binding AddStudentCommand}" Width="100" />
 			<Button Content="Update" Command="{Binding UpdateStudentCommand}" Width="80" />
-			<Button Content="Remove" Command="{Binding RemoveStudentCommand}" Width="80" />
 		  </StackPanel>
 		</StackPanel>
 	  </StackPanel>
@@ -74,7 +73,6 @@
 		  <StackPanel Orientation="Horizontal" Spacing="8">
 			<Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" Width="100" />
 			<Button Content="Update" Command="{Binding UpdateEquipmentCommand}" Width="80" />
-			<Button Content="Remove" Command="{Binding RemoveEquipmentCommand}" Width="80" />
 		  </StackPanel>
 		</StackPanel>
 	  </StackPanel>
