@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EquiBorrow.Application.Interfaces;
@@ -6,61 +7,111 @@ using EquiBorrow.Domain;
 
 namespace EquiBorrow.Application.Services;
 
-public class BorrowEquipmentService
+public sealed class BorrowEquipmentService
 {
-    private readonly IStudentRepository _studentRepository;
-    private readonly IEquipmentRepository _equipmentRepository;
-    private readonly IBorrowingRepository _borrowingRepository;
     private const int MaxActiveBorrowings = 3;
+    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
+    private readonly TimeProvider _timeProvider;
 
-    public BorrowEquipmentService(
-        IStudentRepository studentRepository,
-        IEquipmentRepository equipmentRepository,
-        IBorrowingRepository borrowingRepository)
+    public BorrowEquipmentService(IUnitOfWorkFactory unitOfWorkFactory, TimeProvider timeProvider)
     {
-        _studentRepository = studentRepository;
-        _equipmentRepository = equipmentRepository;
-        _borrowingRepository = borrowingRepository;
+        _unitOfWorkFactory = unitOfWorkFactory;
+        _timeProvider = timeProvider;
     }
 
-    public async Task<Borrowing> ExecuteAsync(int studentId, int equipmentId, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<BorrowingDetails>> ExecuteAsync(
+        int studentId,
+        int equipmentId,
+        DateOnly expectedReturnDate,
+        CancellationToken cancellationToken = default)
     {
-        // 1. Validate Student
-        var student = await _studentRepository.GetByIdAsync(studentId, cancellationToken);
-        if (student == null)
-            throw new InvalidOperationException("Student does not exist.");
-        if (!student.IsActive)
-            throw new InvalidOperationException("Student is not allowed to borrow equipment.");
+        var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
 
-        // 2. Validate Equipment
-        var equipment = await _equipmentRepository.GetByIdAsync(equipmentId, cancellationToken);
-        if (equipment == null)
-            throw new InvalidOperationException("Equipment does not exist.");
-        if (!equipment.IsAvailable)
-            throw new InvalidOperationException("Equipment is currently unavailable.");
+        try
+        {
+            await using var unitOfWork = _unitOfWorkFactory.Create();
+            var student = await unitOfWork.Students.GetByIdForUpdateAsync(studentId, cancellationToken);
+            if (student is null)
+                return OperationResult<BorrowingDetails>.Rejected("Student was not found.");
+            if (!student.IsActive)
+                return OperationResult<BorrowingDetails>.Rejected("Student is inactive and cannot borrow equipment.");
 
-        // 3. Check Borrowing Limit
-        var activeCount = await _borrowingRepository.GetActiveCountByStudentIdAsync(studentId, cancellationToken);
-        if (activeCount >= MaxActiveBorrowings)
-            throw new InvalidOperationException($"Student already has max {MaxActiveBorrowings} active borrowings.");
+            var equipment = await unitOfWork.Equipment.GetByIdForUpdateAsync(equipmentId, cancellationToken);
+            if (equipment is null)
+                return OperationResult<BorrowingDetails>.Rejected("Equipment was not found.");
+            if (!equipment.IsAvailable)
+                return OperationResult<BorrowingDetails>.Rejected("Equipment is currently unavailable.");
 
-        // 4. Create Borrowing Record
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        var borrowing = new Borrowing(
-            id: 0,
-            studentId: studentId,
-            equipmentId: equipmentId,
-            borrowDate: today,
-            expectedReturnDate: today.AddDays(7)
-        );
+            if (expectedReturnDate <= today)
+                return OperationResult<BorrowingDetails>.Rejected("Expected return date must be later than today.");
 
-        // 5. Mark Equipment as Unavailable
-        equipment.IsAvailable = false;
+            var activeCount = await unitOfWork.Borrowings.GetActiveCountByStudentAsync(studentId, cancellationToken);
+            if (activeCount >= MaxActiveBorrowings)
+                return OperationResult<BorrowingDetails>.Rejected($"Student already has the maximum of {MaxActiveBorrowings} active borrowings.");
 
-        // 6. Save Changes
-        await _borrowingRepository.AddAsync(borrowing, cancellationToken);
-        await _equipmentRepository.UpdateAsync(equipment, cancellationToken);
+            var borrowing = new Borrowing(0, studentId, equipmentId, today, expectedReturnDate);
+            equipment.IsAvailable = false;
+            unitOfWork.Borrowings.Add(borrowing, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
-        return borrowing;
+            var details = new BorrowingDetails(
+                borrowing.Id,
+                student.Id,
+                student.StudentNumber,
+                student.Name,
+                equipment.Id,
+                equipment.Identifier,
+                equipment.Name,
+                borrowing.BorrowDate,
+                borrowing.ExpectedReturnDate,
+                borrowing.ReturnDate,
+                borrowing.Status,
+                borrowing.Version);
+            return OperationResult<BorrowingDetails>.Succeeded(details, "Equipment borrowed successfully.");
+        }
+        catch (CommitOutcomeUnknownException)
+        {
+            return await VerifyUnknownBorrowAsync(studentId, equipmentId, today, cancellationToken);
+        }
+        catch (PersistenceConflictException exception) when (
+            exception.Kind == PersistenceConflictKind.Concurrency ||
+            exception.ConstraintName == "UX_Borrowings_OneActivePerEquipment")
+        {
+            return OperationResult<BorrowingDetails>.Stale("The item was just borrowed or changed. Refresh the data before retrying.");
+        }
+        catch (PersistenceConflictException)
+        {
+            return OperationResult<BorrowingDetails>.Failed("The borrow could not be saved because a conflicting record exists.");
+        }
+        catch (PersistenceFailureException)
+        {
+            return OperationResult<BorrowingDetails>.Failed("The borrow could not be saved. No changes were committed.");
+        }
+    }
+
+    private async Task<OperationResult<BorrowingDetails>> VerifyUnknownBorrowAsync(
+        int studentId,
+        int equipmentId,
+        DateOnly today,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var verificationUnit = _unitOfWorkFactory.Create();
+            var activeBorrowing = (await verificationUnit.Borrowings.GetActiveDetailsAsync(cancellationToken))
+                .FirstOrDefault(borrowing =>
+                    borrowing.StudentId == studentId &&
+                    borrowing.EquipmentId == equipmentId &&
+                    borrowing.BorrowDate == today);
+            if (activeBorrowing is not null)
+                return OperationResult<BorrowingDetails>.Succeeded(activeBorrowing, "The borrow was verified as committed.");
+
+            return OperationResult<BorrowingDetails>.Failed("The borrow was verified as not committed. You may refresh and retry.");
+        }
+        catch (Exception)
+        {
+            return OperationResult<BorrowingDetails>.Unknown(
+                "The commit result could not be verified. Refresh and check the borrowing before retrying.");
+        }
     }
 }

@@ -22,17 +22,20 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
         GetListAsync(_db.Equipment.AsNoTracking().Where(equipment => equipment.IsAvailable), cancellationToken);
 
     public Task<Equipment?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        _db.Equipment.AsNoTracking().SingleOrDefaultAsync(equipment => equipment.Id == id, cancellationToken);
+        EfPersistenceExecutor.ExecuteAsync(() =>
+            _db.Equipment.AsNoTracking().SingleOrDefaultAsync(equipment => equipment.Id == id, cancellationToken));
 
     public Task<Equipment?> GetByIdForUpdateAsync(int id, CancellationToken cancellationToken = default) =>
-        _db.Equipment.SingleOrDefaultAsync(equipment => equipment.Id == id, cancellationToken);
+        EfPersistenceExecutor.ExecuteAsync(() =>
+            _db.Equipment.SingleOrDefaultAsync(equipment => equipment.Id == id, cancellationToken));
 
     public async Task<IReadOnlyList<Equipment>> GetByIdsForUpdateAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
         var idList = ids.Distinct().ToArray();
         if (idList.Length == 0)
             return Array.Empty<Equipment>();
-        return await _db.Equipment.Where(equipment => idList.Contains(equipment.Id)).ToListAsync(cancellationToken);
+        return await EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<Equipment>>(async () =>
+            await _db.Equipment.Where(equipment => idList.Contains(equipment.Id)).ToListAsync(cancellationToken));
     }
 
     public Task<bool> ExistsByIdentifierAsync(string identifier, int? excludeId = null, CancellationToken cancellationToken = default)
@@ -41,7 +44,7 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
         var equipmentQuery = _db.Equipment.AsNoTracking().Where(equipment => equipment.Identifier.Trim().ToLower() == normalizedIdentifier);
         if (excludeId.HasValue)
             equipmentQuery = equipmentQuery.Where(equipment => equipment.Id != excludeId.Value);
-        return equipmentQuery.AnyAsync(cancellationToken);
+        return EfPersistenceExecutor.ExecuteAsync(() => equipmentQuery.AnyAsync(cancellationToken));
     }
 
     public void Add(Equipment equipment, CancellationToken cancellationToken = default)
@@ -60,8 +63,9 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
         return Task.CompletedTask;
     }
 
-    private static async Task<IReadOnlyList<Equipment>> GetListAsync(
+    private static Task<IReadOnlyList<Equipment>> GetListAsync(
         IQueryable<Equipment> query,
         CancellationToken cancellationToken) =>
-        await query.OrderBy(equipment => equipment.Name).ToListAsync(cancellationToken);
+        EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<Equipment>>(async () =>
+            await query.OrderBy(equipment => equipment.Name).ToListAsync(cancellationToken));
 }

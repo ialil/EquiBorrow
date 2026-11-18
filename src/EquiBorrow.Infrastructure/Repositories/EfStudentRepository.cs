@@ -16,14 +16,17 @@ public sealed class EfStudentRepository : IStudentRepository
 
     public EfStudentRepository(EquipmentBorrowingDbContext db) => _db = db;
 
-    public async Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await _db.Students.AsNoTracking().OrderBy(student => student.Name).ToListAsync(cancellationToken);
+    public Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<Student>>(async () =>
+            await _db.Students.AsNoTracking().OrderBy(student => student.Name).ToListAsync(cancellationToken));
 
     public Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        _db.Students.AsNoTracking().SingleOrDefaultAsync(student => student.Id == id, cancellationToken);
+        EfPersistenceExecutor.ExecuteAsync(() =>
+            _db.Students.AsNoTracking().SingleOrDefaultAsync(student => student.Id == id, cancellationToken));
 
     public Task<Student?> GetByIdForUpdateAsync(int id, CancellationToken cancellationToken = default) =>
-        _db.Students.SingleOrDefaultAsync(student => student.Id == id, cancellationToken);
+        EfPersistenceExecutor.ExecuteAsync(() =>
+            _db.Students.SingleOrDefaultAsync(student => student.Id == id, cancellationToken));
 
     public Task<bool> ExistsByNumberAsync(string number, int? excludeId = null, CancellationToken cancellationToken = default)
     {
@@ -32,7 +35,7 @@ public sealed class EfStudentRepository : IStudentRepository
         var students = _db.Students.AsNoTracking().Where(student => student.StudentNumber.Trim().ToLower() == normalizedNumber);
         if (excludeId.HasValue)
             students = students.Where(student => student.Id != excludeId.Value);
-        return students.AnyAsync(cancellationToken);
+        return EfPersistenceExecutor.ExecuteAsync(() => students.AnyAsync(cancellationToken));
     }
 
     public void Add(Student student, CancellationToken cancellationToken = default)
