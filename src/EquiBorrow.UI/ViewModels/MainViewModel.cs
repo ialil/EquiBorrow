@@ -247,9 +247,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private async Task InspectSqlAsync()
     {
         var sql = await _inspectionService.GetGeneratedSqlAsync();
-        var baseDirectory = AppContext.BaseDirectory;
-        var outputPath = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "docs", "database-queries.sql"));
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? "docs");
+        var outputPath = Path.Combine("logs", "generated-sql.sql");
         await File.WriteAllTextAsync(outputPath, sql);
         StatusMessage = $"Generated SQL written to {outputPath}";
     }

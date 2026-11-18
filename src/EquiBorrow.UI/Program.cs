@@ -23,7 +23,6 @@ public static class Program
         var services = new ServiceCollection();
 
         System.IO.Directory.CreateDirectory("logs");
-        System.IO.Directory.CreateDirectory("docs");
 
         var interceptor = new EquiBorrow.Infrastructure.Sql.EfCommandLoggingInterceptor();
 
