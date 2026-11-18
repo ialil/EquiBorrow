@@ -114,6 +114,13 @@ EquiBorrow.UI is the Avalonia desktop project added in this activity. It is the 
 the solution (EquiBorrow.slnx references EquiBorrow.UI, EquiBorrow.Application, EquiBorrow.Domain,
 and EquiBorrow.Infrastructure). Its responsibilities are limited to presentation:
 
+### Configuration
+
+Set the PostgreSQL connection string in `src/EquiBorrow.UI/appsettings.Local.json` under
+`ConnectionStrings:EquiBorrow`; this file is git-ignored and copied to the UI output directory.
+Alternatively, set the `ConnectionStrings__EquiBorrow` environment variable. The tracked
+`appsettings.json` contains only a password placeholder.
+
 Views (MainWindow.axaml): lays out the Students, Equipment, and Borrowing sections using
 Grid, StackPanel, and ListBox controls, and binds them to a ViewModel.
 ViewModels (ViewModels/MainViewModel.cs): exposes ObservableCollection<T> properties
