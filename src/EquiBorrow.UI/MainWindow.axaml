@@ -19,9 +19,10 @@
 		<ListBox Name="StudentsList" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" Height="200">
 		  <ListBox.ItemTemplate>
 			<DataTemplate>
-			  <StackPanel Orientation="Horizontal" Spacing="6" Margin="4">
+			  <StackPanel Margin="4,2">
 				<TextBlock Text="{Binding StudentNumber}" />
 				<TextBlock Text="{Binding Name}" />
+				<TextBlock Text="{Binding EligibilityStatus}" FontSize="10" />
 			  </StackPanel>
 			</DataTemplate>
 		  </ListBox.ItemTemplate>
@@ -43,7 +44,7 @@
 		  <TextBox Watermark="Student number" Text="{Binding NewStudentNumber, Mode=TwoWay}" />
 		  <TextBox Watermark="Full name" Text="{Binding NewStudentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Contact (optional)" Text="{Binding NewStudentContact, Mode=TwoWay}" />
-		  <Button Content="Add Student" Command="{Binding AddStudentCommand}" Width="100" HorizontalAlignment="Left" />
+		  <Button Content="Add Student" Command="{Binding AddStudentCommand}" MinWidth="100" HorizontalAlignment="Left" />
 		</StackPanel>
 
 		<StackPanel Margin="0,16,0,0" Spacing="8">
@@ -51,7 +52,14 @@
 		  <TextBox Watermark="Student number" Text="{Binding EditStudentNumber, Mode=TwoWay}" />
 		  <TextBox Watermark="Full name" Text="{Binding EditStudentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Contact (optional)" Text="{Binding EditStudentContact, Mode=TwoWay}" />
-		  <Button Content="Update" Command="{Binding UpdateStudentCommand}" Width="80" HorizontalAlignment="Left" />
+		  <Button Content="Update" Command="{Binding UpdateStudentCommand}" MinWidth="80" HorizontalAlignment="Left" />
+		</StackPanel>
+
+		<StackPanel Margin="0,16,0,0" Spacing="8">
+		  <TextBlock Text="Borrowing eligibility" FontWeight="Bold" />
+		  <TextBlock Text="{Binding SelectedStudentEligibility}" />
+		  <Button Content="Permit borrowing" Command="{Binding PermitBorrowingCommand}" MinWidth="120" HorizontalAlignment="Left" />
+		  <Button Content="Restrict borrowing" Command="{Binding RestrictBorrowingCommand}" MinWidth="120" HorizontalAlignment="Left" />
 		</StackPanel>
 	  </StackPanel>
 
@@ -60,7 +68,7 @@
 	<Button Content="Borrow →" Command="{Binding BorrowCommand}" Width="120" Margin="0,0,0,12" HorizontalAlignment="Center"/>
 	<Button Content="Refresh" Command="{Binding RefreshCommand}" Width="120" HorizontalAlignment="Center"/>
 	<!-- Status message moved here to avoid overlapping the borrowed-items area -->
-	<TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+	<TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,8,0,0" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="260"/>
 	  </StackPanel>
 
 	  <!-- EQUIPMENT SECTION -->
@@ -82,7 +90,7 @@
 		  <TextBox Watermark="Equipment identifier" Text="{Binding NewEquipmentIdentifier, Mode=TwoWay}" />
 		  <TextBox Watermark="Name" Text="{Binding NewEquipmentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Description (optional)" Text="{Binding NewEquipmentDescription, Mode=TwoWay}" />
-		  <Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" Width="100" HorizontalAlignment="Left" />
+		  <Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" MinWidth="100" HorizontalAlignment="Left" />
 		</StackPanel>
 
 		<StackPanel Margin="0,16,0,0" Spacing="8">
@@ -90,7 +98,7 @@
 		  <TextBox Watermark="Identifier" Text="{Binding EditEquipmentIdentifier, Mode=TwoWay}" />
 		  <TextBox Watermark="Name" Text="{Binding EditEquipmentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Description (optional)" Text="{Binding EditEquipmentDescription, Mode=TwoWay}" />
-		  <Button Content="Update" Command="{Binding UpdateEquipmentCommand}" Width="80" HorizontalAlignment="Left" />
+		  <Button Content="Update" Command="{Binding UpdateEquipmentCommand}" MinWidth="80" HorizontalAlignment="Left" />
 		</StackPanel>
 	  </StackPanel>
 	</Grid>

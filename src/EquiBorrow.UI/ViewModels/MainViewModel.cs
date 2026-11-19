@@ -16,6 +16,7 @@ public sealed class StudentItemViewModel
     public string Name { get; init; } = string.Empty;
     public string? Contact { get; init; }
     public bool IsActive { get; init; }
+    public string EligibilityStatus => IsActive ? "Eligible" : "Restricted";
     public uint Version { get; init; }
 }
 
@@ -48,6 +49,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly RegisterEquipmentService _registerEquipmentService;
     private readonly UpdateStudentService _updateStudentService;
     private readonly UpdateEquipmentService _updateEquipmentService;
+    private readonly ChangeStudentEligibilityService _changeStudentEligibilityService;
     private readonly IInspectionService _inspectionService;
     private readonly TimeProvider _timeProvider;
 
@@ -65,12 +67,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _selectedStudent = value;
             OnPropertyChanged(nameof(SelectedStudent));
             UpdateStudentCommand?.RaiseCanExecuteChanged();
+            PermitBorrowingCommand?.RaiseCanExecuteChanged();
+            RestrictBorrowingCommand?.RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(SelectedStudentEligibility));
             EditStudentNumber = value?.StudentNumber ?? string.Empty;
             EditStudentName = value?.Name ?? string.Empty;
             EditStudentContact = value?.Contact ?? string.Empty;
             StudentBorrows.Clear();
             if (value is not null)
-                Observe(LoadStudentBorrowingsAsync(value.Id));
+                Observe(LoadStudentBorrowingsAsync(value.Id, updateStatusMessage: !_suppressBorrowingStatusMessage));
         }
     }
 
@@ -89,6 +94,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             EditEquipmentDescription = value?.Description ?? string.Empty;
         }
     }
+
+    public string SelectedStudentEligibility => SelectedStudent is null
+        ? "Select a student to view eligibility."
+        : SelectedStudent.IsActive ? "Eligible to borrow" : "Restricted from borrowing";
 
     private string _newStudentNumber = string.Empty;
     public string NewStudentNumber { get => _newStudentNumber; set { _newStudentNumber = value; OnPropertyChanged(nameof(NewStudentNumber)); } }
@@ -133,6 +142,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public RelayCommand AddStudentCommand { get; }
     public RelayCommand UpdateStudentCommand { get; }
+    public RelayCommand PermitBorrowingCommand { get; }
+    public RelayCommand RestrictBorrowingCommand { get; }
     public RelayCommand AddEquipmentCommand { get; }
     public RelayCommand UpdateEquipmentCommand { get; }
     public RelayCommand BorrowCommand { get; }
@@ -140,6 +151,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand InspectSqlCommand { get; }
 
     private bool _isBusy;
+    private bool _suppressBorrowingStatusMessage;
     public bool IsBusy
     {
         get => _isBusy;
@@ -151,6 +163,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             AddStudentCommand?.RaiseCanExecuteChanged();
             AddEquipmentCommand?.RaiseCanExecuteChanged();
             UpdateStudentCommand?.RaiseCanExecuteChanged();
+            PermitBorrowingCommand?.RaiseCanExecuteChanged();
+            RestrictBorrowingCommand?.RaiseCanExecuteChanged();
             UpdateEquipmentCommand?.RaiseCanExecuteChanged();
             BorrowCommand?.RaiseCanExecuteChanged();
             RefreshCommand?.RaiseCanExecuteChanged();
@@ -167,6 +181,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RegisterEquipmentService registerEquipmentService,
         UpdateStudentService updateStudentService,
         UpdateEquipmentService updateEquipmentService,
+        ChangeStudentEligibilityService changeStudentEligibilityService,
         IInspectionService inspectionService,
         TimeProvider timeProvider)
     {
@@ -178,11 +193,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _registerEquipmentService = registerEquipmentService ?? throw new ArgumentNullException(nameof(registerEquipmentService));
         _updateStudentService = updateStudentService ?? throw new ArgumentNullException(nameof(updateStudentService));
         _updateEquipmentService = updateEquipmentService ?? throw new ArgumentNullException(nameof(updateEquipmentService));
+        _changeStudentEligibilityService = changeStudentEligibilityService ?? throw new ArgumentNullException(nameof(changeStudentEligibilityService));
         _inspectionService = inspectionService ?? throw new ArgumentNullException(nameof(inspectionService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         AddStudentCommand = new RelayCommand(_ => RunCommandAsync(RegisterStudentAsync), _ => !IsBusy);
         UpdateStudentCommand = new RelayCommand(_ => RunCommandAsync(UpdateStudentAsync), _ => SelectedStudent is not null && !IsBusy);
+        PermitBorrowingCommand = new RelayCommand(_ => RunCommandAsync(() => ChangeStudentEligibilityAsync(true)), _ => SelectedStudent is not null && !IsBusy);
+        RestrictBorrowingCommand = new RelayCommand(_ => RunCommandAsync(() => ChangeStudentEligibilityAsync(false)), _ => SelectedStudent is not null && !IsBusy);
         AddEquipmentCommand = new RelayCommand(_ => RunCommandAsync(RegisterEquipmentAsync), _ => !IsBusy);
         UpdateEquipmentCommand = new RelayCommand(_ => RunCommandAsync(UpdateEquipmentAsync), _ => SelectedEquipment is not null && !IsBusy);
         BorrowCommand = new RelayCommand(_ => RunCommandAsync(BorrowAsync), _ => !IsBusy);
@@ -251,12 +269,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StatusMessage = result.Message;
     }
 
-    private async Task LoadStudentBorrowingsAsync(int studentId)
+    private async Task LoadStudentBorrowingsAsync(int studentId, bool updateStatusMessage = true)
     {
         var result = await _viewActiveBorrowingsService.ExecuteAsync(studentId);
         if (result.Outcome != OperationOutcome.Success || result.Value is null)
         {
-            StatusMessage = result.Message;
+            if (updateStatusMessage)
+                StatusMessage = result.Message;
             return;
         }
 
@@ -272,7 +291,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Version = borrowing.Version
             });
         }
-        StatusMessage = result.Message;
+        if (updateStatusMessage)
+            StatusMessage = result.Message;
     }
 
     private async Task RegisterStudentAsync()
@@ -283,11 +303,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             NewStudentNumber = string.Empty;
             NewStudentName = string.Empty;
             NewStudentContact = string.Empty;
-            await LoadStudentsAsync();
-            SelectedStudent = FindStudent(result.Value.Id);
-            StatusMessage = _studentsMessage == result.Message
-                ? result.Message
-                : $"{result.Message} {_studentsMessage}";
+            await ReloadStudentsAndReselectAsync(result.Value.Id);
+            StatusMessage = result.Message;
         }
         else
         {
@@ -307,9 +324,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             NewEquipmentDescription = string.Empty;
             await LoadEquipmentAsync();
             SelectedEquipment = FindEquipment(result.Value.Id);
-            StatusMessage = _equipmentMessage == result.Message
-                ? result.Message
-                : $"{result.Message} {_equipmentMessage}";
+            StatusMessage = result.Message;
         }
         else
         {
@@ -339,6 +354,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return null;
     }
 
+    private async Task ReloadStudentsAndReselectAsync(int studentId)
+    {
+        _suppressBorrowingStatusMessage = true;
+        try
+        {
+            SelectedStudent = null;
+            await LoadStudentsAsync();
+            SelectedStudent = FindStudent(studentId);
+        }
+        finally
+        {
+            _suppressBorrowingStatusMessage = false;
+        }
+    }
+
     private async Task UpdateStudentAsync()
     {
         var selected = SelectedStudent;
@@ -348,11 +378,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var result = await _updateStudentService.ExecuteAsync(
             selected.Id, selected.Version, EditStudentNumber, EditStudentName, EditStudentContact);
         if (result.Outcome is OperationOutcome.Success or OperationOutcome.Stale or OperationOutcome.UnknownOutcome)
-        {
-            SelectedStudent = null;
-            await LoadStudentsAsync();
-            SelectedStudent = FindStudent(selected.Id);
-        }
+            await ReloadStudentsAndReselectAsync(selected.Id);
         StatusMessage = result.Message;
     }
 
@@ -370,6 +396,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
             await LoadEquipmentAsync();
             SelectedEquipment = FindEquipment(selected.Id);
         }
+        StatusMessage = result.Message;
+    }
+
+    private async Task ChangeStudentEligibilityAsync(bool isEligible)
+    {
+        var selected = SelectedStudent;
+        if (selected is null)
+            return;
+
+        var result = await _changeStudentEligibilityService.ExecuteAsync(selected.Id, selected.Version, isEligible);
+        if (result.Outcome is OperationOutcome.Success or OperationOutcome.Stale or OperationOutcome.UnknownOutcome)
+            await ReloadStudentsAndReselectAsync(selected.Id);
         StatusMessage = result.Message;
     }
 
