@@ -27,6 +27,7 @@
 			</DataTemplate>
 		  </ListBox.ItemTemplate>
 		</ListBox>
+		<Button Content="Student history" IsEnabled="{Binding CanOpenStudentHistory}" Click="StudentHistory_Click" MinWidth="120" HorizontalAlignment="Left" Margin="0,6,0,0" />
 
 		<TextBlock Text="Active Borrowings" FontWeight="Bold" FontSize="12" Margin="0,12,0,8"/>
 		<ListBox ItemsSource="{Binding ActiveBorrowings}" SelectedItem="{Binding SelectedActiveBorrowing, Mode=TwoWay}" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto">
@@ -95,6 +96,7 @@
 			</DataTemplate>
 		  </ListBox.ItemTemplate>
 		</ListBox>
+		<Button Content="Equipment history" IsEnabled="{Binding CanOpenEquipmentHistory}" Click="EquipmentHistory_Click" MinWidth="130" HorizontalAlignment="Left" Margin="0,6,0,0" />
 
 		<StackPanel Margin="0,12,0,0" Spacing="8">
 		  <TextBox Watermark="Equipment identifier" Text="{Binding NewEquipmentIdentifier, Mode=TwoWay}" />

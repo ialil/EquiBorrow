@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		x:Class="EquiBorrow.UI.Windows.EquipmentHistoryWindow"
+		Title="Equipment Borrowing History" Width="720" Height="600">
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="20">
+	<TextBlock Text="Equipment borrowing history" FontSize="18" FontWeight="Bold" Margin="0,0,0,8" />
+	<ComboBox Grid.Row="1" ItemsSource="{Binding EquipmentItems}"
+			  SelectedItem="{Binding SelectedEquipment, Mode=TwoWay}"
+			  HorizontalAlignment="Stretch">
+	  <ComboBox.ItemTemplate>
+		<DataTemplate>
+		  <StackPanel Orientation="Horizontal" Spacing="6">
+			<TextBlock Text="{Binding Identifier}" />
+			<TextBlock Text="{Binding Name}" />
+		  </StackPanel>
+		</DataTemplate>
+	  </ComboBox.ItemTemplate>
+	</ComboBox>
+	<TextBlock Grid.Row="2" Text="{Binding SelectedIdentity}" FontWeight="Bold" TextWrapping="Wrap" />
+	<Grid Grid.Row="3">
+	  <TextBlock Text="Loading history..." IsVisible="{Binding IsLoading}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+	  <TextBlock Text="{Binding Message}" IsVisible="{Binding ShowEmptyState}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+	  <TextBlock Text="{Binding Message}" IsVisible="{Binding IsStale}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+	  <ListBox ItemsSource="{Binding Borrowings}" IsVisible="{Binding ShowRows}">
+		<ListBox.ItemTemplate>
+		  <DataTemplate>
+			<StackPanel Margin="6" Spacing="3">
+			  <TextBlock Text="{Binding RelatedIdentity}" FontWeight="Bold" TextWrapping="Wrap" />
+			  <TextBlock Text="{Binding BorrowDate, StringFormat='Checkout: {0:yyyy-MM-dd}'}" />
+			  <TextBlock Text="{Binding ExpectedReturnDate, StringFormat='Expected return: {0:yyyy-MM-dd}'}" />
+			  <TextBlock Text="{Binding StatusText, StringFormat='Status: {0}'}" />
+			  <TextBlock Text="{Binding ReturnDateText, StringFormat='Returned: {0}'}" IsVisible="{Binding HasReturnDate}" />
+			</StackPanel>
+		  </DataTemplate>
+		</ListBox.ItemTemplate>
+	  </ListBox>
+	</Grid>
+	<StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+	  <TextBlock Text="{Binding Message}" IsVisible="{Binding HasError}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="480" />
+	  <Button Content="Retry" Command="{Binding RetryCommand}" IsVisible="{Binding HasError}" MinWidth="80" />
+	</StackPanel>
+  </Grid>
+</Window>

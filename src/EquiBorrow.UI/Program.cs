@@ -56,9 +56,16 @@ public static class Program
         services.AddTransient<ListStudentsService>();
         services.AddTransient<ViewEquipmentCatalogService>();
         services.AddTransient<ViewActiveBorrowingsService>();
+        services.AddTransient<ViewStudentBorrowingHistoryService>();
+        services.AddTransient<ViewEquipmentBorrowingHistoryService>();
         services.AddSingleton<IInspectionService, EquiBorrow.Infrastructure.Sql.SqlInspector>();
 
         services.AddTransient<MainViewModel>();
+        services.AddTransient<StudentHistoryViewModel>();
+        services.AddTransient<EquipmentHistoryViewModel>();
+        services.AddTransient<Windows.StudentHistoryWindow>();
+        services.AddTransient<Windows.EquipmentHistoryWindow>();
+        services.AddSingleton<Windows.HistoryWindowFactory>();
         services.AddTransient<MainWindow>();
 
         var serviceProvider = services.BuildServiceProvider();

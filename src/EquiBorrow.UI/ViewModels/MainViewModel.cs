@@ -74,6 +74,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_selectedStudent == value) return;
             _selectedStudent = value;
             OnPropertyChanged(nameof(SelectedStudent));
+            OnPropertyChanged(nameof(CanOpenStudentHistory));
             UpdateStudentCommand?.RaiseCanExecuteChanged();
             PermitBorrowingCommand?.RaiseCanExecuteChanged();
             RestrictBorrowingCommand?.RaiseCanExecuteChanged();
@@ -93,6 +94,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_selectedEquipment == value) return;
             _selectedEquipment = value;
             OnPropertyChanged(nameof(SelectedEquipment));
+            OnPropertyChanged(nameof(CanOpenEquipmentHistory));
             UpdateEquipmentCommand?.RaiseCanExecuteChanged();
             EditEquipmentIdentifier = value?.Identifier ?? string.Empty;
             EditEquipmentName = value?.Name ?? string.Empty;
@@ -103,6 +105,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string SelectedStudentEligibility => SelectedStudent is null
         ? "Select a student to view eligibility."
         : SelectedStudent.IsActive ? "Eligible to borrow" : "Restricted from borrowing";
+    public bool CanOpenStudentHistory => SelectedStudent is not null && !IsBusy;
+    public bool CanOpenEquipmentHistory => SelectedEquipment is not null && !IsBusy;
 
     private string _newStudentNumber = string.Empty;
     public string NewStudentNumber { get => _newStudentNumber; set { _newStudentNumber = value; OnPropertyChanged(nameof(NewStudentNumber)); } }
@@ -206,6 +210,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_isBusy == value) return;
             _isBusy = value;
             OnPropertyChanged(nameof(IsBusy));
+            OnPropertyChanged(nameof(CanOpenStudentHistory));
+            OnPropertyChanged(nameof(CanOpenEquipmentHistory));
             AddStudentCommand?.RaiseCanExecuteChanged();
             AddEquipmentCommand?.RaiseCanExecuteChanged();
             ReturnSelectedCommand?.RaiseCanExecuteChanged();
