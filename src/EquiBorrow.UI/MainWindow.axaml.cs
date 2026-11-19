@@ -10,16 +10,19 @@ public partial class MainWindow : Window
     private readonly MainViewModel _viewModel;
     private readonly HistoryWindowFactory _historyWindowFactory;
     private readonly CheckoutWindowFactory _checkoutWindowFactory;
+    private readonly BorrowingSearchWindowFactory _borrowingSearchWindowFactory;
 
     // MainWindow will be created by the DI container; accept view model via constructor
     public MainWindow(
         MainViewModel viewModel,
         HistoryWindowFactory historyWindowFactory,
-        CheckoutWindowFactory checkoutWindowFactory)
+        CheckoutWindowFactory checkoutWindowFactory,
+        BorrowingSearchWindowFactory borrowingSearchWindowFactory)
     {
         _viewModel = viewModel;
         _historyWindowFactory = historyWindowFactory;
         _checkoutWindowFactory = checkoutWindowFactory;
+        _borrowingSearchWindowFactory = borrowingSearchWindowFactory;
         InitializeComponent();
         DataContext = _viewModel;
     }
@@ -51,6 +54,11 @@ public partial class MainWindow : Window
             window.Closed += (_, _) => checkoutViewModel.RefreshMainWindowRequested -= refreshHandler;
         }
         _checkoutWindowFactory.Show(window, this);
+    }
+
+    private void SearchBorrowings_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _borrowingSearchWindowFactory.Show(_borrowingSearchWindowFactory.CreateBorrowingSearchWindow(), this);
     }
 
     private void Close_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

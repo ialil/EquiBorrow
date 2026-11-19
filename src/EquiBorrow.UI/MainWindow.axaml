@@ -80,6 +80,7 @@
 		<Button Content="Borrow →" Command="{Binding BorrowCommand}" MinWidth="120" HorizontalAlignment="Center"/>
 		<Button Content="Refresh" Command="{Binding RefreshCommand}" MinWidth="120" HorizontalAlignment="Center"/>
 		<Button Content="Multi-item checkout" IsEnabled="{Binding CanOpenMultiItemCheckout}" Click="MultiItemCheckout_Click" MinWidth="160" HorizontalAlignment="Center"/>
+		<Button Content="Search borrowings" IsEnabled="{Binding CanOpenBorrowingSearch}" Click="SearchBorrowings_Click" MinWidth="160" HorizontalAlignment="Center"/>
 		<TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,8,0,0" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="260"/>
 	  </StackPanel>
 
