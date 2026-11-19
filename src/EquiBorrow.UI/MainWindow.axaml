@@ -1,135 +1,218 @@
 <Window xmlns="https://github.com/avaloniaui"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		x:Class="EquiBorrow.UI.MainWindow"
-		Title="EquiBorrow - UI" Width="900" Height="760">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-  <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="20">
-	<TextBlock Text="EquiBorrow - Campus Equipment Borrowing System" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+		Title="EquiBorrow - UI" Width="1100" Height="780" MinWidth="900">
 
-	<Grid Grid.Row="1" Margin="0,0">
-	  <Grid.ColumnDefinitions>
-		<ColumnDefinition Width="*" />
-		<ColumnDefinition Width="*" />
-		<ColumnDefinition Width="*" />
-	  </Grid.ColumnDefinitions>
+  <Window.Styles>
+	<!-- Section container: one subtle panel per area -->
+	<Style Selector="Border.card">
+	  <Setter Property="Background" Value="#14808080"/>
+	  <Setter Property="BorderBrush" Value="#33808080"/>
+	  <Setter Property="BorderThickness" Value="1"/>
+	  <Setter Property="CornerRadius" Value="6"/>
+	  <Setter Property="Padding" Value="14"/>
+	</Style>
 
-	  <!-- STUDENTS SECTION -->
-	  <StackPanel Grid.Column="0" Margin="0,0,16,0">
-		<TextBlock Text="Students" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
-		<ListBox Name="StudentsList" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" Height="200">
-		  <ListBox.ItemTemplate>
-			<DataTemplate>
-			  <StackPanel Margin="4,2">
-				<TextBlock Text="{Binding StudentNumber}" />
-				<TextBlock Text="{Binding Name}" />
-				<TextBlock Text="{Binding EligibilityStatus}" FontSize="10" />
+	<!-- Text roles -->
+	<Style Selector="TextBlock.title">
+	  <Setter Property="FontSize" Value="22"/>
+	  <Setter Property="FontWeight" Value="SemiBold"/>
+	</Style>
+	<Style Selector="TextBlock.section">
+	  <Setter Property="FontSize" Value="15"/>
+	  <Setter Property="FontWeight" Value="SemiBold"/>
+	</Style>
+	<Style Selector="TextBlock.muted">
+	  <Setter Property="FontSize" Value="12"/>
+	  <Setter Property="Opacity" Value="0.65"/>
+	</Style>
+
+	<!-- Buttons: same padding everywhere -->
+	<Style Selector="Button">
+	  <Setter Property="Padding" Value="14,6"/>
+	</Style>
+	<Style Selector="Button.wide">
+	  <Setter Property="HorizontalAlignment" Value="Stretch"/>
+	  <Setter Property="HorizontalContentAlignment" Value="Center"/>
+	</Style>
+
+	<!-- Lists: calmer selection instead of the bright system accent -->
+	<Style Selector="ListBox">
+	  <Setter Property="Background" Value="Transparent"/>
+	  <Setter Property="BorderBrush" Value="#33808080"/>
+	  <Setter Property="BorderThickness" Value="1"/>
+	  <Setter Property="CornerRadius" Value="4"/>
+	</Style>
+	<Style Selector="ListBoxItem">
+	  <Setter Property="Padding" Value="10,6"/>
+	</Style>
+	<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+	  <Setter Property="Background" Value="#22808080"/>
+	</Style>
+	<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+	  <Setter Property="Background" Value="#55808080"/>
+	</Style>
+	<Style Selector="ListBoxItem:selected:focus /template/ ContentPresenter">
+	  <Setter Property="Background" Value="#55808080"/>
+	</Style>
+	<Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+	  <Setter Property="Background" Value="#66808080"/>
+	</Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+
+	<!-- HEADER -->
+	<StackPanel Grid.Row="0" Margin="0,0,0,16" Spacing="2">
+	  <TextBlock Classes="title" Text="EquiBorrow"/>
+	  <TextBlock Classes="muted" Text="Campus Equipment Borrowing System"/>
+	</StackPanel>
+
+	<!-- MAIN CONTENT -->
+	<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+	  <Grid ColumnDefinitions="*,240,*" Margin="0,0,12,0">
+
+		<!-- LEFT: STUDENTS -->
+		<StackPanel Grid.Column="0" Spacing="12">
+
+		  <Border Classes="card">
+			<StackPanel Spacing="8">
+			  <TextBlock Classes="section" Text="Students"/>
+			  <ListBox Name="StudentsList" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" Height="200">
+				<ListBox.ItemTemplate>
+				  <DataTemplate>
+					<StackPanel>
+					  <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+					  <TextBlock Classes="muted" Text="{Binding StudentNumber}"/>
+					  <TextBlock Classes="muted" Text="{Binding EligibilityStatus}"/>
+					</StackPanel>
+				  </DataTemplate>
+				</ListBox.ItemTemplate>
+			  </ListBox>
+			  <Button Content="Student history" IsEnabled="{Binding CanOpenStudentHistory}" Click="StudentHistory_Click" HorizontalAlignment="Left"/>
+
+			  <Expander Header="Add student" Margin="0,4,0,0">
+				<StackPanel Spacing="8" Margin="0,8,0,0">
+				  <TextBox Watermark="Student number" Text="{Binding NewStudentNumber, Mode=TwoWay}"/>
+				  <TextBox Watermark="Full name" Text="{Binding NewStudentName, Mode=TwoWay}"/>
+				  <TextBox Watermark="Contact (optional)" Text="{Binding NewStudentContact, Mode=TwoWay}"/>
+				  <Button Content="Add student" Command="{Binding AddStudentCommand}" HorizontalAlignment="Left"/>
+				</StackPanel>
+			  </Expander>
+
+			  <Expander Header="Edit selected student">
+				<StackPanel Spacing="8" Margin="0,8,0,0">
+				  <TextBox Watermark="Student number" Text="{Binding EditStudentNumber, Mode=TwoWay}"/>
+				  <TextBox Watermark="Full name" Text="{Binding EditStudentName, Mode=TwoWay}"/>
+				  <TextBox Watermark="Contact (optional)" Text="{Binding EditStudentContact, Mode=TwoWay}"/>
+				  <Button Content="Update" Command="{Binding UpdateStudentCommand}" HorizontalAlignment="Left"/>
+				</StackPanel>
+			  </Expander>
+
+			  <Expander Header="Borrowing eligibility">
+				<StackPanel Spacing="8" Margin="0,8,0,0">
+				  <TextBlock Text="{Binding SelectedStudentEligibility}"/>
+				  <StackPanel Orientation="Horizontal" Spacing="8">
+					<Button Content="Permit borrowing" Command="{Binding PermitBorrowingCommand}"/>
+					<Button Content="Restrict borrowing" Command="{Binding RestrictBorrowingCommand}"/>
+				  </StackPanel>
+				</StackPanel>
+			  </Expander>
+			</StackPanel>
+		  </Border>
+
+		  <Border Classes="card">
+			<StackPanel Spacing="8">
+			  <TextBlock Classes="section" Text="Active borrowings"/>
+			  <ListBox ItemsSource="{Binding ActiveBorrowings}" SelectedItem="{Binding SelectedActiveBorrowing, Mode=TwoWay}" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto">
+				<ListBox.ItemTemplate>
+				  <DataTemplate>
+					<TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap"/>
+				  </DataTemplate>
+				</ListBox.ItemTemplate>
+			  </ListBox>
+			  <TextBlock Text="{Binding ActiveBorrowingsMessage}" IsVisible="{Binding ShowActiveBorrowingsMessage}" TextWrapping="Wrap"/>
+			  <Button Content="Retry" Command="{Binding RetryActiveBorrowingsCommand}" IsVisible="{Binding HasActiveBorrowingsError}" HorizontalAlignment="Left"/>
+			  <Button Content="Return selected" Command="{Binding ReturnSelectedCommand}" HorizontalAlignment="Left"/>
+			  <StackPanel IsVisible="{Binding IsReturnConfirmationVisible}" Spacing="6">
+				<TextBlock Text="{Binding ReturnConfirmationText}" TextWrapping="Wrap"/>
+				<StackPanel Orientation="Horizontal" Spacing="8">
+				  <Button Content="Confirm return" Command="{Binding ConfirmReturnCommand}"/>
+				  <Button Content="Cancel" Command="{Binding CancelReturnCommand}"/>
+				</StackPanel>
 			  </StackPanel>
-			</DataTemplate>
-		  </ListBox.ItemTemplate>
-		</ListBox>
-		<Button Content="Student history" IsEnabled="{Binding CanOpenStudentHistory}" Click="StudentHistory_Click" MinWidth="120" HorizontalAlignment="Left" Margin="0,6,0,0" />
+			</StackPanel>
+		  </Border>
+		</StackPanel>
 
-		<TextBlock Text="Active Borrowings" FontWeight="Bold" FontSize="12" Margin="0,12,0,8"/>
-		<ListBox ItemsSource="{Binding ActiveBorrowings}" SelectedItem="{Binding SelectedActiveBorrowing, Mode=TwoWay}" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto">
-		  <ListBox.ItemTemplate>
-			<DataTemplate>
-			  <TextBlock Text="{Binding DisplayText}" Margin="4,2" TextWrapping="Wrap"/>
-			</DataTemplate>
-		  </ListBox.ItemTemplate>
-		</ListBox>
-		<TextBlock Text="{Binding ActiveBorrowingsMessage}" IsVisible="{Binding ShowActiveBorrowingsMessage}" TextWrapping="Wrap" Margin="4,4"/>
-		<Button Content="Retry" Command="{Binding RetryActiveBorrowingsCommand}" IsVisible="{Binding HasActiveBorrowingsError}" MinWidth="70" HorizontalAlignment="Left"/>
-		<Button Content="Return selected" Command="{Binding ReturnSelectedCommand}" MinWidth="120" HorizontalAlignment="Left"/>
-		<StackPanel IsVisible="{Binding IsReturnConfirmationVisible}" Margin="0,8,0,0" Spacing="6">
-		  <TextBlock Text="{Binding ReturnConfirmationText}" TextWrapping="Wrap"/>
-		  <StackPanel Orientation="Horizontal" Spacing="8">
-			<Button Content="Confirm return" Command="{Binding ConfirmReturnCommand}" MinWidth="110"/>
-			<Button Content="Cancel" Command="{Binding CancelReturnCommand}" MinWidth="70"/>
+		<!-- CENTER: ACTIONS -->
+		<Border Grid.Column="1" Classes="card" Margin="12,0" VerticalAlignment="Top">
+		  <StackPanel Spacing="8">
+			<TextBlock Classes="section" Text="Actions"/>
+			<TextBlock Classes="muted" Text="Expected return date" Margin="0,4,0,0"/>
+			<CalendarDatePicker SelectedDate="{Binding ExpectedReturnDate, Mode=TwoWay}"
+				DisplayDateStart="{Binding EarliestExpectedReturnDate}"
+				HorizontalAlignment="Stretch"/>
+			<Button Classes="wide accent" Content="Borrow" Command="{Binding BorrowCommand}"/>
+			<Button Classes="wide" Content="Refresh" Command="{Binding RefreshCommand}"/>
+			<Button Classes="wide" Content="Multi-item checkout" IsEnabled="{Binding CanOpenMultiItemCheckout}" Click="MultiItemCheckout_Click"/>
+			<Button Classes="wide" Content="Search borrowings" IsEnabled="{Binding CanOpenBorrowingSearch}" Click="SearchBorrowings_Click"/>
+			<TextBlock Classes="muted" Text="{Binding StatusMessage}" Margin="0,6,0,0" TextWrapping="Wrap"/>
 		  </StackPanel>
-		</StackPanel>
+		</Border>
 
-		<StackPanel Margin="0,12,0,0" Spacing="8">
-		  <TextBox Watermark="Student number" Text="{Binding NewStudentNumber, Mode=TwoWay}" />
-		  <TextBox Watermark="Full name" Text="{Binding NewStudentName, Mode=TwoWay}" />
-		  <TextBox Watermark="Contact (optional)" Text="{Binding NewStudentContact, Mode=TwoWay}" />
-		  <Button Content="Add Student" Command="{Binding AddStudentCommand}" MinWidth="100" HorizontalAlignment="Left" />
-		</StackPanel>
+		<!-- RIGHT: EQUIPMENT -->
+		<Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
+		  <StackPanel Spacing="8">
+			<TextBlock Classes="section" Text="Equipment"/>
+			<CheckBox Content="Show available only" IsChecked="{Binding ShowAvailableOnly, Mode=TwoWay}" IsEnabled="{Binding CanChangeEquipmentFilter}"/>
+			<ListBox Name="EquipmentsList" ItemsSource="{Binding Equipments}" SelectedItem="{Binding SelectedEquipment, Mode=TwoWay}" Height="200">
+			  <ListBox.ItemTemplate>
+				<DataTemplate>
+				  <StackPanel>
+					<TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+					<TextBlock Classes="muted" Text="{Binding Identifier}"/>
+					<TextBlock Classes="muted" Text="{Binding DescriptionText}" IsVisible="{Binding HasDescription}" TextWrapping="Wrap"/>
+					<TextBlock Classes="muted" Text="{Binding IsAvailable, StringFormat='Available: {0}'}"/>
+				  </StackPanel>
+				</DataTemplate>
+			  </ListBox.ItemTemplate>
+			</ListBox>
+			<TextBlock Text="{Binding EquipmentMessage}" IsVisible="{Binding ShowEquipmentMessage}" TextWrapping="Wrap"/>
+			<Button Content="Retry" Command="{Binding RetryEquipmentCommand}" IsVisible="{Binding HasEquipmentError}" HorizontalAlignment="Left"/>
+			<Button Content="Equipment history" IsEnabled="{Binding CanOpenEquipmentHistory}" Click="EquipmentHistory_Click" HorizontalAlignment="Left"/>
 
-		<StackPanel Margin="0,16,0,0" Spacing="8">
-		  <TextBlock Text="Edit selected student" FontWeight="Bold" />
-		  <TextBox Watermark="Student number" Text="{Binding EditStudentNumber, Mode=TwoWay}" />
-		  <TextBox Watermark="Full name" Text="{Binding EditStudentName, Mode=TwoWay}" />
-		  <TextBox Watermark="Contact (optional)" Text="{Binding EditStudentContact, Mode=TwoWay}" />
-		  <Button Content="Update" Command="{Binding UpdateStudentCommand}" MinWidth="80" HorizontalAlignment="Left" />
-		</StackPanel>
-
-		<StackPanel Margin="0,16,0,0" Spacing="8">
-		  <TextBlock Text="Borrowing eligibility" FontWeight="Bold" />
-		  <TextBlock Text="{Binding SelectedStudentEligibility}" />
-		  <Button Content="Permit borrowing" Command="{Binding PermitBorrowingCommand}" MinWidth="120" HorizontalAlignment="Left" />
-		  <Button Content="Restrict borrowing" Command="{Binding RestrictBorrowingCommand}" MinWidth="120" HorizontalAlignment="Left" />
-		</StackPanel>
-	  </StackPanel>
-
-	  <!-- CENTER BUTTONS -->
-	  <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0" Spacing="8">
-		<TextBlock Text="Expected return date" HorizontalAlignment="Center"/>
-		<CalendarDatePicker SelectedDate="{Binding ExpectedReturnDate, Mode=TwoWay}"
-			DisplayDateStart="{Binding EarliestExpectedReturnDate}"
-			HorizontalAlignment="Center"/>
-		<Button Content="Borrow →" Command="{Binding BorrowCommand}" MinWidth="120" HorizontalAlignment="Center"/>
-		<Button Content="Refresh" Command="{Binding RefreshCommand}" MinWidth="120" HorizontalAlignment="Center"/>
-		<Button Content="Multi-item checkout" IsEnabled="{Binding CanOpenMultiItemCheckout}" Click="MultiItemCheckout_Click" MinWidth="160" HorizontalAlignment="Center"/>
-		<Button Content="Search borrowings" IsEnabled="{Binding CanOpenBorrowingSearch}" Click="SearchBorrowings_Click" MinWidth="160" HorizontalAlignment="Center"/>
-		<TextBlock Text="{Binding StatusMessage}" FontSize="12" Margin="0,8,0,0" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="260"/>
-	  </StackPanel>
-
-	  <!-- EQUIPMENT SECTION -->
-	  <StackPanel Grid.Column="2" Margin="16,0,0,0">
-		<TextBlock Text="Equipment" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
-		<CheckBox Content="Show available only" IsChecked="{Binding ShowAvailableOnly, Mode=TwoWay}" IsEnabled="{Binding CanChangeEquipmentFilter}" Margin="0,0,0,6" />
-		<ListBox Name="EquipmentsList" ItemsSource="{Binding Equipments}" SelectedItem="{Binding SelectedEquipment, Mode=TwoWay}" Height="200">
-		  <ListBox.ItemTemplate>
-			<DataTemplate>
-			  <StackPanel>
-				<TextBlock Text="{Binding Identifier}" Margin="4"/>
-				<TextBlock Text="{Binding Name}" Margin="4,0"/>
-				<TextBlock Text="{Binding DescriptionText}" IsVisible="{Binding HasDescription}" FontSize="10" Foreground="Gray" Margin="4,0" TextWrapping="Wrap"/>
-				<TextBlock Text="{Binding IsAvailable, StringFormat='Available: {0}'}" FontSize="10" Margin="4,0,4,2"/>
+			<Expander Header="Add equipment" Margin="0,4,0,0">
+			  <StackPanel Spacing="8" Margin="0,8,0,0">
+				<TextBox Watermark="Equipment identifier" Text="{Binding NewEquipmentIdentifier, Mode=TwoWay}"/>
+				<TextBox Watermark="Name" Text="{Binding NewEquipmentName, Mode=TwoWay}"/>
+				<TextBox Watermark="Description (optional)" Text="{Binding NewEquipmentDescription, Mode=TwoWay}"/>
+				<Button Content="Add equipment" Command="{Binding AddEquipmentCommand}" HorizontalAlignment="Left"/>
 			  </StackPanel>
-			</DataTemplate>
-		  </ListBox.ItemTemplate>
-		</ListBox>
-		<TextBlock Text="{Binding EquipmentMessage}" IsVisible="{Binding ShowEquipmentMessage}" TextWrapping="Wrap" Margin="4,4" />
-		<Button Content="Retry" Command="{Binding RetryEquipmentCommand}" IsVisible="{Binding HasEquipmentError}" MinWidth="70" HorizontalAlignment="Left" />
-		<Button Content="Equipment history" IsEnabled="{Binding CanOpenEquipmentHistory}" Click="EquipmentHistory_Click" MinWidth="130" HorizontalAlignment="Left" Margin="0,6,0,0" />
+			</Expander>
 
-		<StackPanel Margin="0,12,0,0" Spacing="8">
-		  <TextBox Watermark="Equipment identifier" Text="{Binding NewEquipmentIdentifier, Mode=TwoWay}" />
-		  <TextBox Watermark="Name" Text="{Binding NewEquipmentName, Mode=TwoWay}" />
-		  <TextBox Watermark="Description (optional)" Text="{Binding NewEquipmentDescription, Mode=TwoWay}" />
-		  <Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" MinWidth="100" HorizontalAlignment="Left" />
-		</StackPanel>
+			<Expander Header="Edit selected equipment">
+			  <StackPanel Spacing="8" Margin="0,8,0,0">
+				<TextBox Watermark="Identifier" Text="{Binding EditEquipmentIdentifier, Mode=TwoWay}"/>
+				<TextBox Watermark="Name" Text="{Binding EditEquipmentName, Mode=TwoWay}"/>
+				<TextBox Watermark="Description (optional)" Text="{Binding EditEquipmentDescription, Mode=TwoWay}"/>
+				<Button Content="Update" Command="{Binding UpdateEquipmentCommand}" HorizontalAlignment="Left"/>
+			  </StackPanel>
+			</Expander>
+		  </StackPanel>
+		</Border>
 
-		<StackPanel Margin="0,16,0,0" Spacing="8">
-		  <TextBlock Text="Edit selected equipment" FontWeight="Bold" />
-		  <TextBox Watermark="Identifier" Text="{Binding EditEquipmentIdentifier, Mode=TwoWay}" />
-		  <TextBox Watermark="Name" Text="{Binding EditEquipmentName, Mode=TwoWay}" />
-		  <TextBox Watermark="Description (optional)" Text="{Binding EditEquipmentDescription, Mode=TwoWay}" />
-		  <Button Content="Update" Command="{Binding UpdateEquipmentCommand}" MinWidth="80" HorizontalAlignment="Left" />
-		</StackPanel>
+	  </Grid>
+	</ScrollViewer>
+
+	<!-- FOOTER -->
+	<Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+	  <TextBlock Grid.Column="0" Text="Working..." FontStyle="Italic" Opacity="0.65" VerticalAlignment="Center" IsVisible="{Binding IsBusy}"/>
+	  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+		<Button Content="Inspect SQL" Command="{Binding InspectSqlCommand}" MinWidth="110"/>
+		<Button Content="Close" Click="Close_Click" MinWidth="90"/>
 	  </StackPanel>
 	</Grid>
 
-  <!-- moved StatusMessage into center column; keep Working indicator below so it's visible near controls -->
-  <StackPanel Grid.Row="2" Margin="0,16,0,0" HorizontalAlignment="Center">
-	<TextBlock Text="Working..." FontStyle="Italic" Foreground="Gray" IsVisible="{Binding IsBusy}" Margin="0,4" />
-  </StackPanel>
-
-	<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
-	  <Button Content="Inspect SQL" Command="{Binding InspectSqlCommand}" Width="120" />
-	  <Button Content="Close" Width="100" Click="Close_Click"/>
-	</StackPanel>
   </Grid>
-  </ScrollViewer>
 </Window>
