@@ -34,7 +34,7 @@ public sealed class BorrowEquipmentService
             if (student is null)
                 return OperationResult<BorrowingDetails>.Rejected("Student was not found.");
             if (!student.IsActive)
-                return OperationResult<BorrowingDetails>.Rejected("Student is inactive and cannot borrow equipment.");
+                return OperationResult<BorrowingDetails>.Rejected($"{student.StudentNumber} — {student.Name} is restricted from borrowing.");
 
             var equipment = await unitOfWork.Equipment.GetByIdForUpdateAsync(equipmentId, cancellationToken);
             if (equipment is null)
