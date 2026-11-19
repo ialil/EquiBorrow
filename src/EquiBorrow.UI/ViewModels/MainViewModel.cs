@@ -26,6 +26,10 @@ public sealed class EquipmentItemViewModel
     public string Identifier { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string? Description { get; init; }
+    public string DescriptionText => string.IsNullOrWhiteSpace(Description)
+        ? string.Empty
+        : Description.Trim().Length > 80 ? Description.Trim()[..77] + "..." : Description.Trim();
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     public bool IsAvailable { get; init; }
     public uint Version { get; init; }
 }
@@ -50,6 +54,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ListStudentsService _listStudentsService;
     private readonly ViewEquipmentCatalogService _viewEquipmentCatalogService;
+    private readonly FindAvailableEquipmentService _findAvailableEquipmentService;
     private readonly ViewActiveBorrowingsService _viewActiveBorrowingsService;
     private readonly BorrowEquipmentService _borrowEquipmentService;
     private readonly ReturnEquipmentService _returnEquipmentService;
@@ -82,6 +87,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
             EditStudentNumber = value?.StudentNumber ?? string.Empty;
             EditStudentName = value?.Name ?? string.Empty;
             EditStudentContact = value?.Contact ?? string.Empty;
+        }
+    }
+
+    private bool _showAvailableOnly;
+    public bool ShowAvailableOnly
+    {
+        get => _showAvailableOnly;
+        set
+        {
+            if (_showAvailableOnly == value) return;
+            _showAvailableOnly = value;
+            OnPropertyChanged(nameof(ShowAvailableOnly));
+            RunCommandAsync(() => LoadEquipmentAsync());
         }
     }
 
@@ -147,6 +165,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _statusMessage = "Available in a later step";
     private string _studentsMessage = string.Empty;
     private string _equipmentMessage = string.Empty;
+    private bool _hasEquipmentError;
     private string _activeBorrowingsMessage = "Loading active borrowings...";
     private bool _hasActiveBorrowingsError;
     private bool _isReturnConfirmationVisible;
@@ -154,6 +173,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private DateTime? _expectedReturnDate;
 
     public string ActiveBorrowingsMessage { get => _activeBorrowingsMessage; private set { _activeBorrowingsMessage = value; OnPropertyChanged(nameof(ActiveBorrowingsMessage)); OnPropertyChanged(nameof(ShowActiveBorrowingsMessage)); } }
+    public string EquipmentMessage
+    {
+        get => _equipmentMessage;
+        private set { _equipmentMessage = value; OnPropertyChanged(nameof(EquipmentMessage)); OnPropertyChanged(nameof(ShowEquipmentMessage)); }
+    }
+    public bool HasEquipmentError
+    {
+        get => _hasEquipmentError;
+        private set { _hasEquipmentError = value; OnPropertyChanged(nameof(HasEquipmentError)); OnPropertyChanged(nameof(ShowEquipmentMessage)); }
+    }
+    public bool ShowEquipmentMessage => HasEquipmentError || Equipments.Count == 0;
+    public bool CanChangeEquipmentFilter => !IsBusy;
     public bool HasActiveBorrowingsError { get => _hasActiveBorrowingsError; private set { _hasActiveBorrowingsError = value; OnPropertyChanged(nameof(HasActiveBorrowingsError)); OnPropertyChanged(nameof(ShowActiveBorrowingsMessage)); } }
     public bool ShowActiveBorrowingsMessage => HasActiveBorrowingsError || ActiveBorrowings.Count == 0;
     public bool IsReturnConfirmationVisible
@@ -195,6 +226,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand UpdateEquipmentCommand { get; }
     public RelayCommand BorrowCommand { get; }
     public RelayCommand RetryActiveBorrowingsCommand { get; }
+    public RelayCommand RetryEquipmentCommand { get; }
     public RelayCommand ReturnSelectedCommand { get; }
     public RelayCommand ConfirmReturnCommand { get; }
     public RelayCommand CancelReturnCommand { get; }
@@ -210,6 +242,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_isBusy == value) return;
             _isBusy = value;
             OnPropertyChanged(nameof(IsBusy));
+            OnPropertyChanged(nameof(CanChangeEquipmentFilter));
             OnPropertyChanged(nameof(CanOpenStudentHistory));
             OnPropertyChanged(nameof(CanOpenEquipmentHistory));
             AddStudentCommand?.RaiseCanExecuteChanged();
@@ -218,6 +251,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             ConfirmReturnCommand?.RaiseCanExecuteChanged();
             CancelReturnCommand?.RaiseCanExecuteChanged();
             RetryActiveBorrowingsCommand?.RaiseCanExecuteChanged();
+            RetryEquipmentCommand?.RaiseCanExecuteChanged();
             UpdateStudentCommand?.RaiseCanExecuteChanged();
             PermitBorrowingCommand?.RaiseCanExecuteChanged();
             RestrictBorrowingCommand?.RaiseCanExecuteChanged();
@@ -231,6 +265,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public MainViewModel(
         ListStudentsService listStudentsService,
         ViewEquipmentCatalogService viewEquipmentCatalogService,
+        FindAvailableEquipmentService findAvailableEquipmentService,
         ViewActiveBorrowingsService viewActiveBorrowingsService,
         BorrowEquipmentService borrowEquipmentService,
         ReturnEquipmentService returnEquipmentService,
@@ -244,6 +279,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         _listStudentsService = listStudentsService ?? throw new ArgumentNullException(nameof(listStudentsService));
         _viewEquipmentCatalogService = viewEquipmentCatalogService ?? throw new ArgumentNullException(nameof(viewEquipmentCatalogService));
+        _findAvailableEquipmentService = findAvailableEquipmentService ?? throw new ArgumentNullException(nameof(findAvailableEquipmentService));
         _viewActiveBorrowingsService = viewActiveBorrowingsService ?? throw new ArgumentNullException(nameof(viewActiveBorrowingsService));
         _borrowEquipmentService = borrowEquipmentService ?? throw new ArgumentNullException(nameof(borrowEquipmentService));
         _returnEquipmentService = returnEquipmentService ?? throw new ArgumentNullException(nameof(returnEquipmentService));
@@ -263,6 +299,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         UpdateEquipmentCommand = new RelayCommand(_ => RunCommandAsync(UpdateEquipmentAsync), _ => SelectedEquipment is not null && !IsBusy);
         BorrowCommand = new RelayCommand(_ => RunCommandAsync(BorrowAsync), _ => !IsBusy);
         RetryActiveBorrowingsCommand = new RelayCommand(_ => RunCommandAsync(RetryActiveBorrowingsAsync), _ => !IsBusy);
+        RetryEquipmentCommand = new RelayCommand(_ => RunCommandAsync(RetryEquipmentAsync), _ => !IsBusy);
         ReturnSelectedCommand = new RelayCommand(_ => ShowReturnConfirmation(), _ => SelectedActiveBorrowing is not null && !IsBusy);
         ConfirmReturnCommand = new RelayCommand(_ => RunCommandAsync(ReturnSelectedBorrowingAsync), _ => SelectedActiveBorrowing is not null && IsReturnConfirmationVisible && !IsBusy);
         CancelReturnCommand = new RelayCommand(_ => HideReturnConfirmation(), _ => IsReturnConfirmationVisible && !IsBusy);
@@ -272,6 +309,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var initialDate = _timeProvider.GetLocalNow().Date.AddDays(7);
         ExpectedReturnDate = initialDate;
         ActiveBorrowings.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowActiveBorrowingsMessage));
+        Equipments.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowEquipmentMessage));
         RunCommandAsync(LoadDataAsync);
     }
 
@@ -319,16 +357,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task LoadEquipmentAsync(bool updateStatusMessage = true)
     {
-        var result = await _viewEquipmentCatalogService.ExecuteAsync();
-        _equipmentMessage = result.Message;
+        var selectedEquipmentId = SelectedEquipment?.Id;
+        var result = ShowAvailableOnly
+            ? await _findAvailableEquipmentService.ExecuteAsync()
+            : await _viewEquipmentCatalogService.ExecuteAsync();
+        Equipments.Clear();
         if (result.Outcome != OperationOutcome.Success || result.Value is null)
         {
+            HasEquipmentError = true;
+            EquipmentMessage = result.Message;
+            SelectedEquipment = null;
             if (updateStatusMessage)
                 StatusMessage = result.Message;
             return;
         }
 
-        Equipments.Clear();
+        HasEquipmentError = false;
         foreach (var equipment in result.Value)
         {
             Equipments.Add(new EquipmentItemViewModel
@@ -341,6 +385,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Version = equipment.Version
             });
         }
+        SelectedEquipment = selectedEquipmentId.HasValue ? FindEquipment(selectedEquipmentId.Value) : null;
+        EquipmentMessage = Equipments.Count > 0
+            ? string.Empty
+            : ShowAvailableOnly ? "No equipment is currently available." : "No equipment registered.";
         if (updateStatusMessage)
             StatusMessage = result.Message;
     }
@@ -538,6 +586,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         await LoadActiveBorrowingsAsync(SelectedActiveBorrowing?.BorrowingId);
         if (HasActiveBorrowingsError)
             StatusMessage = ActiveBorrowingsMessage;
+    }
+
+    private async Task RetryEquipmentAsync()
+    {
+        await LoadEquipmentAsync();
+        if (HasEquipmentError)
+            StatusMessage = EquipmentMessage;
     }
 
     private void ShowReturnConfirmation()

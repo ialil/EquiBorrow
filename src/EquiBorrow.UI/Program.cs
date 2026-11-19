@@ -55,6 +55,7 @@ public static class Program
         services.AddTransient<ChangeStudentEligibilityService>();
         services.AddTransient<ListStudentsService>();
         services.AddTransient<ViewEquipmentCatalogService>();
+        services.AddTransient<FindAvailableEquipmentService>();
         services.AddTransient<ViewActiveBorrowingsService>();
         services.AddTransient<ViewStudentBorrowingHistoryService>();
         services.AddTransient<ViewEquipmentBorrowingHistoryService>();

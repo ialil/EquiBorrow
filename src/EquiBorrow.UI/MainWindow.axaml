@@ -85,17 +85,21 @@
 	  <!-- EQUIPMENT SECTION -->
 	  <StackPanel Grid.Column="2" Margin="16,0,0,0">
 		<TextBlock Text="Equipment" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
+		<CheckBox Content="Show available only" IsChecked="{Binding ShowAvailableOnly, Mode=TwoWay}" IsEnabled="{Binding CanChangeEquipmentFilter}" Margin="0,0,0,6" />
 		<ListBox Name="EquipmentsList" ItemsSource="{Binding Equipments}" SelectedItem="{Binding SelectedEquipment, Mode=TwoWay}" Height="200">
 		  <ListBox.ItemTemplate>
 			<DataTemplate>
 			  <StackPanel>
 				<TextBlock Text="{Binding Identifier}" Margin="4"/>
 				<TextBlock Text="{Binding Name}" Margin="4,0"/>
+				<TextBlock Text="{Binding DescriptionText}" IsVisible="{Binding HasDescription}" FontSize="10" Foreground="Gray" Margin="4,0" TextWrapping="Wrap"/>
 				<TextBlock Text="{Binding IsAvailable, StringFormat='Available: {0}'}" FontSize="10" Margin="4,0,4,2"/>
 			  </StackPanel>
 			</DataTemplate>
 		  </ListBox.ItemTemplate>
 		</ListBox>
+		<TextBlock Text="{Binding EquipmentMessage}" IsVisible="{Binding ShowEquipmentMessage}" TextWrapping="Wrap" Margin="4,4" />
+		<Button Content="Retry" Command="{Binding RetryEquipmentCommand}" IsVisible="{Binding HasEquipmentError}" MinWidth="70" HorizontalAlignment="Left" />
 		<Button Content="Equipment history" IsEnabled="{Binding CanOpenEquipmentHistory}" Click="EquipmentHistory_Click" MinWidth="130" HorizontalAlignment="Left" Margin="0,6,0,0" />
 
 		<StackPanel Margin="0,12,0,0" Spacing="8">
