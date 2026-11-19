@@ -1,0 +1,60 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		x:Class="EquiBorrow.UI.Windows.CheckoutWindow"
+		Title="Multi-item checkout" Width="650" Height="720">
+  <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="20">
+	<TextBlock Text="Multi-item checkout" FontSize="18" FontWeight="Bold" Margin="0,0,0,8" />
+
+	<StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,10">
+	  <TextBlock Text="Student" FontWeight="Bold" />
+	  <ComboBox ItemsSource="{Binding Students}"
+				SelectedItem="{Binding SelectedStudent, Mode=TwoWay}"
+				IsEnabled="{Binding IsStudentSelectorEnabled}">
+		<ComboBox.ItemTemplate>
+		  <DataTemplate>
+			<TextBlock Text="{Binding DisplayText}" />
+		  </DataTemplate>
+		</ComboBox.ItemTemplate>
+	  </ComboBox>
+	</StackPanel>
+
+	<StackPanel Grid.Row="2" Spacing="6" Margin="0,0,0,10">
+	  <TextBlock Text="Expected return date" FontWeight="Bold" />
+	  <CalendarDatePicker SelectedDate="{Binding ExpectedReturnDate, Mode=TwoWay}"
+						  DisplayDateStart="{Binding EarliestExpectedReturnDate}"
+						  IsEnabled="{Binding IsExpectedReturnDateEnabled}" />
+	</StackPanel>
+
+	<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,0,6">
+	  <TextBlock Text="Equipment" FontWeight="Bold" />
+	  <TextBlock Text="{Binding SelectedItemsText}" HorizontalAlignment="Right" Margin="12,0,0,0" />
+	</StackPanel>
+
+	<ListBox Grid.Row="4" ItemsSource="{Binding Equipments}" IsEnabled="{Binding IsEquipmentListEnabled}">
+	  <ListBox.ItemTemplate>
+		<DataTemplate>
+		  <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,5">
+			<CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" />
+			<StackPanel>
+			  <TextBlock Text="{Binding Identifier}" FontWeight="Bold" />
+			  <TextBlock Text="{Binding Name}" />
+			</StackPanel>
+			<TextBlock Text="{Binding AvailabilityText}" FontSize="11" Foreground="Gray" VerticalAlignment="Center" Margin="8,0,0,0" />
+		  </StackPanel>
+		</DataTemplate>
+	  </ListBox.ItemTemplate>
+	</ListBox>
+
+	<TextBlock Grid.Row="5" Text="{Binding LoadErrorMessage}" IsVisible="{Binding HasLoadError}" TextWrapping="Wrap" Foreground="Firebrick" Margin="0,8" />
+	<StackPanel Grid.Row="6" Spacing="8">
+	  <TextBlock Text="Loading students and equipment..." IsVisible="{Binding IsLoadingData}" FontStyle="Italic" />
+	  <TextBlock Text="Checking out..." IsVisible="{Binding IsCheckingOut}" FontStyle="Italic" />
+	  <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+	  <StackPanel Orientation="Horizontal" Spacing="8">
+		<Button Content="Retry" Command="{Binding RetryCommand}" IsVisible="{Binding HasLoadError}" MinWidth="80" />
+		<Button Content="Check out selected items" Command="{Binding SubmitCommand}" MinWidth="190" />
+		<Button Content="Close" Click="Close_Click" MinWidth="80" />
+	  </StackPanel>
+	</StackPanel>
+  </Grid>
+</Window>

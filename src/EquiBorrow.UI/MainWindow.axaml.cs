@@ -9,12 +9,17 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly HistoryWindowFactory _historyWindowFactory;
+    private readonly CheckoutWindowFactory _checkoutWindowFactory;
 
     // MainWindow will be created by the DI container; accept view model via constructor
-    public MainWindow(MainViewModel viewModel, HistoryWindowFactory historyWindowFactory)
+    public MainWindow(
+        MainViewModel viewModel,
+        HistoryWindowFactory historyWindowFactory,
+        CheckoutWindowFactory checkoutWindowFactory)
     {
         _viewModel = viewModel;
         _historyWindowFactory = historyWindowFactory;
+        _checkoutWindowFactory = checkoutWindowFactory;
         InitializeComponent();
         DataContext = _viewModel;
     }
@@ -34,6 +39,18 @@ public partial class MainWindow : Window
     {
         if (_viewModel.SelectedEquipment is { } equipment)
             _historyWindowFactory.Show(_historyWindowFactory.CreateEquipmentHistoryWindow(equipment.Id), this);
+    }
+
+    private void MultiItemCheckout_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var window = _checkoutWindowFactory.CreateCheckoutWindow(_viewModel.SelectedStudent?.Id);
+        if (window.ViewModel is { } checkoutViewModel)
+        {
+            EventHandler refreshHandler = (_, _) => _viewModel.RefreshCommand.Execute(null);
+            checkoutViewModel.RefreshMainWindowRequested += refreshHandler;
+            window.Closed += (_, _) => checkoutViewModel.RefreshMainWindowRequested -= refreshHandler;
+        }
+        _checkoutWindowFactory.Show(window, this);
     }
 
     private void Close_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

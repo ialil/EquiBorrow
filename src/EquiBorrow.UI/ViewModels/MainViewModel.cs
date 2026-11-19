@@ -232,6 +232,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand CancelReturnCommand { get; }
     public RelayCommand RefreshCommand { get; }
     public RelayCommand InspectSqlCommand { get; }
+    public bool CanOpenMultiItemCheckout => !IsBusy;
 
     private bool _isBusy;
     public bool IsBusy
@@ -242,6 +243,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_isBusy == value) return;
             _isBusy = value;
             OnPropertyChanged(nameof(IsBusy));
+            OnPropertyChanged(nameof(CanOpenMultiItemCheckout));
             OnPropertyChanged(nameof(CanChangeEquipmentFilter));
             OnPropertyChanged(nameof(CanOpenStudentHistory));
             OnPropertyChanged(nameof(CanOpenEquipmentHistory));

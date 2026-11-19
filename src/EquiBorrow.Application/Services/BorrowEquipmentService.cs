@@ -9,7 +9,6 @@ namespace EquiBorrow.Application.Services;
 
 public sealed class BorrowEquipmentService
 {
-    private const int MaxActiveBorrowings = 3;
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
     private readonly TimeProvider _timeProvider;
 
@@ -46,8 +45,8 @@ public sealed class BorrowEquipmentService
                 return OperationResult<BorrowingDetails>.Rejected("Expected return date must be later than today.");
 
             var activeCount = await unitOfWork.Borrowings.GetActiveCountByStudentAsync(studentId, cancellationToken);
-            if (activeCount >= MaxActiveBorrowings)
-                return OperationResult<BorrowingDetails>.Rejected($"Student already has the maximum of {MaxActiveBorrowings} active borrowings.");
+            if (activeCount >= BorrowingRules.MaxActiveBorrowings)
+                return OperationResult<BorrowingDetails>.Rejected($"Student already has the maximum of {BorrowingRules.MaxActiveBorrowings} active borrowings.");
 
             var borrowing = new Borrowing(0, studentId, equipmentId, today, expectedReturnDate);
             equipment.IsAvailable = false;

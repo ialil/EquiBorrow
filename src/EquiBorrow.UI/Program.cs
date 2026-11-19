@@ -47,6 +47,7 @@ public static class Program
         services.AddSingleton<IUnitOfWorkFactory, EfUnitOfWorkFactory>();
         services.AddSingleton(TimeProvider.System);
         services.AddTransient<BorrowEquipmentService>();
+        services.AddTransient<CheckOutMultipleEquipmentService>();
         services.AddTransient<ReturnEquipmentService>();
         services.AddTransient<RegisterStudentService>();
         services.AddTransient<RegisterEquipmentService>();
@@ -66,7 +67,10 @@ public static class Program
         services.AddTransient<EquipmentHistoryViewModel>();
         services.AddTransient<Windows.StudentHistoryWindow>();
         services.AddTransient<Windows.EquipmentHistoryWindow>();
+        services.AddTransient<CheckoutViewModel>();
+        services.AddTransient<Windows.CheckoutWindow>();
         services.AddSingleton<Windows.HistoryWindowFactory>();
+        services.AddSingleton<Windows.CheckoutWindowFactory>();
         services.AddTransient<MainWindow>();
 
         var serviceProvider = services.BuildServiceProvider();

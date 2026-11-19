@@ -37,7 +37,7 @@ public sealed class EfEquipmentRepository : IEquipmentRepository
         if (idList.Length == 0)
             return Array.Empty<Equipment>();
         return await EfPersistenceExecutor.ExecuteAsync<IReadOnlyList<Equipment>>(async () =>
-            await _db.Equipment.Where(equipment => idList.Contains(equipment.Id)).ToListAsync(cancellationToken));
+            await _db.Equipment.Where(equipment => Enumerable.Contains(idList, equipment.Id)).ToListAsync(cancellationToken));
     }
 
     public Task<bool> ExistsByIdentifierAsync(string identifier, int? excludeId = null, CancellationToken cancellationToken = default)
