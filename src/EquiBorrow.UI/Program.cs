@@ -50,6 +50,8 @@ public static class Program
         services.AddTransient<ReturnEquipmentService>();
         services.AddTransient<RegisterStudentService>();
         services.AddTransient<RegisterEquipmentService>();
+        services.AddTransient<UpdateStudentService>();
+        services.AddTransient<UpdateEquipmentService>();
         services.AddTransient<ListStudentsService>();
         services.AddTransient<ViewEquipmentCatalogService>();
         services.AddTransient<ViewActiveBorrowingsService>();

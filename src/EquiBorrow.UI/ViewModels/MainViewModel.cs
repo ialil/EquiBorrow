@@ -46,6 +46,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly BorrowEquipmentService _borrowEquipmentService;
     private readonly RegisterStudentService _registerStudentService;
     private readonly RegisterEquipmentService _registerEquipmentService;
+    private readonly UpdateStudentService _updateStudentService;
+    private readonly UpdateEquipmentService _updateEquipmentService;
     private readonly IInspectionService _inspectionService;
     private readonly TimeProvider _timeProvider;
 
@@ -62,6 +64,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_selectedStudent == value) return;
             _selectedStudent = value;
             OnPropertyChanged(nameof(SelectedStudent));
+            UpdateStudentCommand?.RaiseCanExecuteChanged();
+            EditStudentNumber = value?.StudentNumber ?? string.Empty;
+            EditStudentName = value?.Name ?? string.Empty;
+            EditStudentContact = value?.Contact ?? string.Empty;
             StudentBorrows.Clear();
             if (value is not null)
                 Observe(LoadStudentBorrowingsAsync(value.Id));
@@ -77,6 +83,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_selectedEquipment == value) return;
             _selectedEquipment = value;
             OnPropertyChanged(nameof(SelectedEquipment));
+            UpdateEquipmentCommand?.RaiseCanExecuteChanged();
+            EditEquipmentIdentifier = value?.Identifier ?? string.Empty;
+            EditEquipmentName = value?.Name ?? string.Empty;
+            EditEquipmentDescription = value?.Description ?? string.Empty;
         }
     }
 
@@ -97,6 +107,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private string _newEquipmentDescription = string.Empty;
     public string NewEquipmentDescription { get => _newEquipmentDescription; set { _newEquipmentDescription = value; OnPropertyChanged(nameof(NewEquipmentDescription)); } }
+
+    private string _editStudentNumber = string.Empty;
+    public string EditStudentNumber { get => _editStudentNumber; set { _editStudentNumber = value; OnPropertyChanged(nameof(EditStudentNumber)); } }
+
+    private string _editStudentName = string.Empty;
+    public string EditStudentName { get => _editStudentName; set { _editStudentName = value; OnPropertyChanged(nameof(EditStudentName)); } }
+
+    private string _editStudentContact = string.Empty;
+    public string EditStudentContact { get => _editStudentContact; set { _editStudentContact = value; OnPropertyChanged(nameof(EditStudentContact)); } }
+
+    private string _editEquipmentIdentifier = string.Empty;
+    public string EditEquipmentIdentifier { get => _editEquipmentIdentifier; set { _editEquipmentIdentifier = value; OnPropertyChanged(nameof(EditEquipmentIdentifier)); } }
+
+    private string _editEquipmentName = string.Empty;
+    public string EditEquipmentName { get => _editEquipmentName; set { _editEquipmentName = value; OnPropertyChanged(nameof(EditEquipmentName)); } }
+
+    private string _editEquipmentDescription = string.Empty;
+    public string EditEquipmentDescription { get => _editEquipmentDescription; set { _editEquipmentDescription = value; OnPropertyChanged(nameof(EditEquipmentDescription)); } }
 
     private string _statusMessage = "Available in a later step";
     private string _studentsMessage = string.Empty;
@@ -122,6 +150,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsBusy));
             AddStudentCommand?.RaiseCanExecuteChanged();
             AddEquipmentCommand?.RaiseCanExecuteChanged();
+            UpdateStudentCommand?.RaiseCanExecuteChanged();
+            UpdateEquipmentCommand?.RaiseCanExecuteChanged();
             BorrowCommand?.RaiseCanExecuteChanged();
             RefreshCommand?.RaiseCanExecuteChanged();
             InspectSqlCommand?.RaiseCanExecuteChanged();
@@ -135,6 +165,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         BorrowEquipmentService borrowEquipmentService,
         RegisterStudentService registerStudentService,
         RegisterEquipmentService registerEquipmentService,
+        UpdateStudentService updateStudentService,
+        UpdateEquipmentService updateEquipmentService,
         IInspectionService inspectionService,
         TimeProvider timeProvider)
     {
@@ -144,13 +176,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _borrowEquipmentService = borrowEquipmentService ?? throw new ArgumentNullException(nameof(borrowEquipmentService));
         _registerStudentService = registerStudentService ?? throw new ArgumentNullException(nameof(registerStudentService));
         _registerEquipmentService = registerEquipmentService ?? throw new ArgumentNullException(nameof(registerEquipmentService));
+        _updateStudentService = updateStudentService ?? throw new ArgumentNullException(nameof(updateStudentService));
+        _updateEquipmentService = updateEquipmentService ?? throw new ArgumentNullException(nameof(updateEquipmentService));
         _inspectionService = inspectionService ?? throw new ArgumentNullException(nameof(inspectionService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         AddStudentCommand = new RelayCommand(_ => RunCommandAsync(RegisterStudentAsync), _ => !IsBusy);
-        UpdateStudentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        UpdateStudentCommand = new RelayCommand(_ => RunCommandAsync(UpdateStudentAsync), _ => SelectedStudent is not null && !IsBusy);
         AddEquipmentCommand = new RelayCommand(_ => RunCommandAsync(RegisterEquipmentAsync), _ => !IsBusy);
-        UpdateEquipmentCommand = new RelayCommand(_ => StatusMessage = "Available in a later step", _ => false);
+        UpdateEquipmentCommand = new RelayCommand(_ => RunCommandAsync(UpdateEquipmentAsync), _ => SelectedEquipment is not null && !IsBusy);
         BorrowCommand = new RelayCommand(_ => RunCommandAsync(BorrowAsync), _ => !IsBusy);
         RefreshCommand = new RelayCommand(_ => RunCommandAsync(RefreshAsync), _ => !IsBusy);
         InspectSqlCommand = new RelayCommand(_ => RunCommandAsync(InspectSqlAsync), _ => !IsBusy);
@@ -303,6 +337,40 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return equipment;
         }
         return null;
+    }
+
+    private async Task UpdateStudentAsync()
+    {
+        var selected = SelectedStudent;
+        if (selected is null)
+            return;
+
+        var result = await _updateStudentService.ExecuteAsync(
+            selected.Id, selected.Version, EditStudentNumber, EditStudentName, EditStudentContact);
+        if (result.Outcome is OperationOutcome.Success or OperationOutcome.Stale or OperationOutcome.UnknownOutcome)
+        {
+            SelectedStudent = null;
+            await LoadStudentsAsync();
+            SelectedStudent = FindStudent(selected.Id);
+        }
+        StatusMessage = result.Message;
+    }
+
+    private async Task UpdateEquipmentAsync()
+    {
+        var selected = SelectedEquipment;
+        if (selected is null)
+            return;
+
+        var result = await _updateEquipmentService.ExecuteAsync(
+            selected.Id, selected.Version, EditEquipmentIdentifier, EditEquipmentName, EditEquipmentDescription);
+        if (result.Outcome is OperationOutcome.Success or OperationOutcome.Stale or OperationOutcome.UnknownOutcome)
+        {
+            SelectedEquipment = null;
+            await LoadEquipmentAsync();
+            SelectedEquipment = FindEquipment(selected.Id);
+        }
+        StatusMessage = result.Message;
     }
 
     private async Task BorrowAsync()

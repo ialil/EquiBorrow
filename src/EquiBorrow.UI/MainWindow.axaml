@@ -43,10 +43,15 @@
 		  <TextBox Watermark="Student number" Text="{Binding NewStudentNumber, Mode=TwoWay}" />
 		  <TextBox Watermark="Full name" Text="{Binding NewStudentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Contact (optional)" Text="{Binding NewStudentContact, Mode=TwoWay}" />
-		  <StackPanel Orientation="Horizontal" Spacing="8">
-			<Button Content="Add Student" Command="{Binding AddStudentCommand}" Width="100" />
-			<Button Content="Update" Command="{Binding UpdateStudentCommand}" Width="80" />
-		  </StackPanel>
+		  <Button Content="Add Student" Command="{Binding AddStudentCommand}" Width="100" HorizontalAlignment="Left" />
+		</StackPanel>
+
+		<StackPanel Margin="0,16,0,0" Spacing="8">
+		  <TextBlock Text="Edit selected student" FontWeight="Bold" />
+		  <TextBox Watermark="Student number" Text="{Binding EditStudentNumber, Mode=TwoWay}" />
+		  <TextBox Watermark="Full name" Text="{Binding EditStudentName, Mode=TwoWay}" />
+		  <TextBox Watermark="Contact (optional)" Text="{Binding EditStudentContact, Mode=TwoWay}" />
+		  <Button Content="Update" Command="{Binding UpdateStudentCommand}" Width="80" HorizontalAlignment="Left" />
 		</StackPanel>
 	  </StackPanel>
 
@@ -77,10 +82,15 @@
 		  <TextBox Watermark="Equipment identifier" Text="{Binding NewEquipmentIdentifier, Mode=TwoWay}" />
 		  <TextBox Watermark="Name" Text="{Binding NewEquipmentName, Mode=TwoWay}" />
 		  <TextBox Watermark="Description (optional)" Text="{Binding NewEquipmentDescription, Mode=TwoWay}" />
-		  <StackPanel Orientation="Horizontal" Spacing="8">
-			<Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" Width="100" />
-			<Button Content="Update" Command="{Binding UpdateEquipmentCommand}" Width="80" />
-		  </StackPanel>
+		  <Button Content="Add Equipment" Command="{Binding AddEquipmentCommand}" Width="100" HorizontalAlignment="Left" />
+		</StackPanel>
+
+		<StackPanel Margin="0,16,0,0" Spacing="8">
+		  <TextBlock Text="Edit selected equipment" FontWeight="Bold" />
+		  <TextBox Watermark="Identifier" Text="{Binding EditEquipmentIdentifier, Mode=TwoWay}" />
+		  <TextBox Watermark="Name" Text="{Binding EditEquipmentName, Mode=TwoWay}" />
+		  <TextBox Watermark="Description (optional)" Text="{Binding EditEquipmentDescription, Mode=TwoWay}" />
+		  <Button Content="Update" Command="{Binding UpdateEquipmentCommand}" Width="80" HorizontalAlignment="Left" />
 		</StackPanel>
 	  </StackPanel>
 	</Grid>
