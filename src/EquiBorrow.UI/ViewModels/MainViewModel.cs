@@ -147,7 +147,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _hasActiveBorrowingsError;
     private bool _isReturnConfirmationVisible;
     private BorrowedItemViewModel? _selectedActiveBorrowing;
-    private DateTimeOffset? _expectedReturnDate;
+    private DateTime? _expectedReturnDate;
 
     public string ActiveBorrowingsMessage { get => _activeBorrowingsMessage; private set { _activeBorrowingsMessage = value; OnPropertyChanged(nameof(ActiveBorrowingsMessage)); OnPropertyChanged(nameof(ShowActiveBorrowingsMessage)); } }
     public bool HasActiveBorrowingsError { get => _hasActiveBorrowingsError; private set { _hasActiveBorrowingsError = value; OnPropertyChanged(nameof(HasActiveBorrowingsError)); OnPropertyChanged(nameof(ShowActiveBorrowingsMessage)); } }
@@ -178,8 +178,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
     public string ReturnConfirmationText => SelectedActiveBorrowing?.ConfirmationText ?? string.Empty;
-    public DateTimeOffset? ExpectedReturnDate { get => _expectedReturnDate; set { _expectedReturnDate = value; OnPropertyChanged(nameof(ExpectedReturnDate)); } }
-    public DateTimeOffset EarliestExpectedReturnDate => _timeProvider.GetLocalNow().Date.AddDays(1);
+    public DateTime? ExpectedReturnDate { get => _expectedReturnDate; set { _expectedReturnDate = value; OnPropertyChanged(nameof(ExpectedReturnDate)); } }
+    public DateTime EarliestExpectedReturnDate => _timeProvider.GetLocalNow().Date.AddDays(1);
 
     public string StatusMessage { get => _statusMessage; set { _statusMessage = value; OnPropertyChanged(nameof(StatusMessage)); } }
 
@@ -497,7 +497,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (SelectedEquipment is null) { StatusMessage = "Select an equipment item."; return; }
         if (ExpectedReturnDate is null) { StatusMessage = "Choose an expected return date."; return; }
 
-        var expectedReturnDate = DateOnly.FromDateTime(ExpectedReturnDate.Value.DateTime);
+        var expectedReturnDate = DateOnly.FromDateTime(ExpectedReturnDate.Value);
         var result = await _borrowEquipmentService.ExecuteAsync(
             SelectedStudent.Id, SelectedEquipment.Id, expectedReturnDate);
         await ReloadBorrowingDataAsync();
