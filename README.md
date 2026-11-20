@@ -444,4 +444,36 @@ Log Verification: They reviewed the generated output files (database-queries.sql
 4.	A migration records model/schema changes as code so EF can generate and apply the correct DDL to the database, keep schema versioning, and include seed data reliably across environments.
 5.	Foreign keys enforce referential integrity (prevent orphaned borrow records), enable correct JOINs for queries, and let the database enforce delete/update rules (restrict/cascade) to keep data consistent.
 6.	AsNoTracking skips EF change-tracking for the returned entities, reducing CPU and memory overhead for read-only queries and improving query performance.
-7.	If you replace SQLite with another provider, only the infrastructure/DbContext provider configuration and possibly migrations/dialect-specific SQL need changes; application and UI that use repository interfaces should remain unchanged (aside from any provider-specific features you used).
+7.	If you replace SQLite with another provider, only the infrastructure/DbContext provider configuration and possibly migrations/dialect-specific SQL need
+
+12. UI Layout (MainWindow.axaml)
+
+The main window was reorganized so related controls are grouped and the screen reads in a fixed order:
+
+- **Header:** application name with the subtitle "Campus Equipment Borrowing System".
+- **Three columns:** Students and Active Borrowings (left), Actions (center), Equipment (right).
+- **Cards:** each area is wrapped in a `Border` with the `card` class, so every section has the same padding, border, and rounded corners.
+- **Collapsible forms:** Add student, Edit selected student, Borrowing eligibility, Add equipment, and Edit selected equipment are `Expander` controls, so the lists stay visible and the forms open only when needed.
+- **Shared styles:** card, text (`title`, `section`, `muted`), button, and list styles are defined once in `Window.Styles` instead of per control.
+- **Selection color:** list selection uses a neutral highlight instead of the system accent color.
+- **Primary action:** only the Borrow button uses the accent style.
+- **Footer:** the "Working..." indicator on the left; Inspect SQL and Close on the right.
+
+Only the layout and styling changed. Bindings, commands, and click handlers are the same, so the ViewModels and code-behind are unaffected.
+
+13. Current Features
+
+- Students: list, add, edit, borrowing history
+- Equipment: list, "show available only" filter, add, edit, history
+- Borrow equipment with an expected return date
+- Active Borrowings list with Return selected and a confirm/cancel step
+- Multi-item checkout
+- Search borrowings
+- Permit or restrict a student's borrowing eligibility
+- Retry buttons when loading students, equipment, or borrowings fails
+- Status messages and a busy indicator for feedback
+- Inspect SQL to view the queries EF Core generated
+
+
+
+changes; application and UI that use repository interfaces should remain unchanged (aside from any provider-specific features you used).
