@@ -474,6 +474,106 @@ Only the layout and styling changed. Bindings, commands, and click handlers are 
 - Status messages and a busy indicator for feedback
 - Inspect SQL to view the queries EF Core generated
 
+## Laboratory Activity 4: PostgreSQL Setup, Run and Design Notes
 
+**Authors:** Dimakuta, Charles Asher C. ([student ID]) and Lumapas, Jayvhine Mae D. ([student ID]), BSIT 3Cx
+
+> Sections 1 to 11 below record earlier activities (in-memory and SQLite versions). Where they disagree with this section, this section is current: the app uses PostgreSQL, EF Core repositories, dependency injection and a working return workflow.
+
+### Prerequisites
+
+- .NET 10 SDK (the projects target `net10.0`)
+- PostgreSQL [your version] running locally
+- Git
+- EF Core CLI tool: `dotnet tool install --global dotnet-ef`
+- Optional: pgAdmin or psql to inspect the database
+
+### Installation
+
+```
+git clone [repo url]
+cd EquiBorrow
+dotnet restore
+dotnet build
+```
+
+### Configuration (no secrets in the repository)
+
+The app reads `ConnectionStrings:EquiBorrow` from these sources, later ones overriding earlier ones:
+
+1. `src/EquiBorrow.UI/appsettings.json` (tracked, placeholder password only)
+2. `src/EquiBorrow.UI/appsettings.Local.json` (git-ignored, your real settings)
+3. The environment variable `ConnectionStrings__EquiBorrow`
+
+Option A: create `src/EquiBorrow.UI/appsettings.Local.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "EquiBorrow": "Host=localhost;Port=5432;Database=equiborrow;Username=postgres;Password=YOUR_PASSWORD"
+  }
+}
+```
+
+Option B (PowerShell, current terminal only):
+
+```
+$env:ConnectionStrings__EquiBorrow = "Host=localhost;Port=5432;Database=equiborrow;Username=postgres;Password=YOUR_PASSWORD"
+```
+
+Never commit a real password. If no connection string is configured, the app prints a message and exits.
+
+### Database and migrations
+
+EF Core creates the `equiborrow` database if it does not exist. The migrations are `InitialCreate` (tables, keys, constraints, indexes) and `AddConcurrencyToken` (PostgreSQL `xmin` row version).
+
+The app applies pending migrations automatically at startup. To apply them manually (set the environment variable from Option B in the same terminal first):
+
+```
+dotnet ef database update --project src/EquiBorrow.Infrastructure --startup-project src/EquiBorrow.UI --context EquipmentBorrowingDbContext
+```
+
+To test on a clean database, run `DROP DATABASE equiborrow;` in psql (disposable data only), then run the command above or start the app.
+
+### Initial data
+
+After migrating, the app inserts sample data only if the students, equipment and borrowings tables are all empty, inside one transaction. An existing database is never overwritten. The sample data has 11 students (4 restricted), 10 equipment items (3 unavailable), 3 active and 2 returned borrowings, and several students and items with no history (for example student 2024-0005 and item EQ-107).
+
+### Run
+
+```
+dotnet run --project src/EquiBorrow.UI
+```
+
+EF Core commands are logged to `logs/ef.log` in the working directory.
+
+### Architecture
+
+Avalonia View → ViewModel → Application service → repository interfaces (`IUnitOfWork`) → EF Core repositories → PostgreSQL.
+
+| Project | Responsibility |
+| --- | --- |
+| EquiBorrow.Domain | Student, Equipment, Borrowing, BorrowingStatus |
+| EquiBorrow.Application | Services for each use case, repository interfaces, rules (limit of 3), operation results |
+| EquiBorrow.Infrastructure | DbContext, entity configurations, migrations, EF repositories, unit of work |
+| EquiBorrow.UI | Views, ViewModels, window factories, composition root (`Program.cs`) |
+
+Views and ViewModels never use a DbContext or SQL. Only `Program.cs` reads the connection string and registers EF Core.
+
+### DbContext lifetime and dependency injection
+
+- `AddDbContextFactory` is registered at startup, with a singleton `IUnitOfWorkFactory`.
+- Each operation creates one `EfUnitOfWork`, which creates one short-lived DbContext shared by the student, equipment and borrowing repositories, and is disposed when the operation ends.
+- Application services and ViewModels are transient and depend on `IUnitOfWorkFactory`, never on a DbContext.
+- Why: a desktop app has no request scope, and a DbContext is not thread-safe and keeps tracked state. A single long-lived context would be shared by concurrent async loads (history windows, search, checkout) and could return stale or conflicting data. A fresh context per operation also means every read sees the real database state, which supports restart and readback verification.
+
+### Transaction and integrity decisions
+
+- **Multi-item checkout (UC-06) is one unit of work.** The service loads the student and the selected items, rechecks eligibility, existence, availability, the limit of three and the expected return date, adds one borrowing per item, marks each item unavailable, then calls `CommitAsync` once. That opens an explicit transaction, saves, and commits. Any failure rolls everything back, so all changes commit or none do.
+- **Revalidation happens at the transaction boundary**, against current database values and right before commit (BR-15).
+- **PostgreSQL is the last line of defense (BR-16):** a partial unique index `UX_Borrowings_OneActivePerEquipment` allows one active borrowing per item; `UX_Students_StudentNumberKey` and `UX_Equipment_IdentifierKey` enforce case-insensitive, trimmed uniqueness; check constraints reject blank required fields and dates out of order; foreign keys use `ON DELETE RESTRICT` so history cannot be orphaned.
+- **Concurrency:** `xmin` is the row version token. A conflicting write is rejected as stale and the UI refreshes.
+- **Unknown commit outcome (BR-18):** if the connection is lost during commit, the service re-reads the state with a fresh unit of work and reports an unknown outcome. It does not retry automatically or claim a rollback.
+- **Results:** services return an `OperationResult` (succeeded, rejected, stale, failed or unknown outcome), so ViewModels show messages without handling database exceptions.
 
 changes; application and UI that use repository interfaces should remain unchanged (aside from any provider-specific features you used).
